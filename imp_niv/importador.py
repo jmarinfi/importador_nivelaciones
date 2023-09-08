@@ -5,6 +5,8 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 
+from imp_niv.utils import abre_gsi
+
 
 ALLOWED_EXTENSIONS = {'gsi', }
 
@@ -29,14 +31,12 @@ def home():
             filename = secure_filename(file.filename)
             file.save(os.path.join(
                 current_app.config['UPLOAD_FOLDER'], filename))
-            return render_template('home.html', gsi=file)
+            df_gsi = abre_gsi(
+                os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+            )
+            return render_template('home.html', tables=[df_gsi.to_html(classes='table table-hover', header=True, index=False)])
         flash('Archivo no válido. Sólo se admiten archivos gsi')
     return render_template('home.html')
-
-
-@bp.route('/uploads/<name>')
-def download_file(name):
-    return send_from_directory(current_app.config['UPLOAD_FOLDER'], name)
 
 
 @bp.route('/descargar-estadillos')

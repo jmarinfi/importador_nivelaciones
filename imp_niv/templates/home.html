@@ -3,7 +3,8 @@
 {% block content %}
 <br>
 <div class="d-grid gap-2 p-4">
-  <a class="btn btn-lg btn-primary" href="{{ url_for('importador.descargar_estadillos') }}" role="button" download>Descarga estadillos de campo</a>
+  <a class="btn btn-lg btn-primary" href="{{ url_for('importador.descargar_estadillos') }}" role="button"
+    download>Descarga estadillos de campo</a>
 </div>
 
 <form class="p-4" action="{{ url_for('importador.home') }}" method="post" enctype="multipart/form-data">
@@ -17,7 +18,9 @@
   </fieldset>
 </form>
 
-{% if gsi %}
-{{ gsi }}
+{% if tables %}
+{% for table in tables %}
+{{ table|safe }}
+{% endfor %}
 {% endif %}
 {% endblock %}
