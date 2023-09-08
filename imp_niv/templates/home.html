@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<br>
+<div class="d-grid gap-2 p-4">
+  <a class="btn btn-lg btn-primary" href="{{ url_for('importador.descargar_estadillos') }}" role="button" download>Descarga estadillos de campo</a>
+</div>
+
+<form class="p-4" action="{{ url_for('importador.home') }}" method="post" enctype="multipart/form-data">
+  <fieldset>
+    <legend>Importador de Nivelaciones</legend>
+    <div class="form-group">
+      <label for="formFile" class="form-label mt-4">Selecciona el archivo GSI</label>
+      <input class="form-control" type="file" id="formFile" name="formFile">
+    </div>
+    <button type="submit" class="btn btn-primary">Importar</button>
+  </fieldset>
+</form>
+
+{% if gsi %}
+{{ gsi }}
+{% endif %}
+{% endblock %}

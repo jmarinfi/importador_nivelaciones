@@ -10,6 +10,8 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY='dev'
     )
+    UPLOAD_FOLDER = os.path.abspath('./files/gsi')
+    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
     if test_config is None:
         # Carga la instancia config, si existe, cuando no se esté en modo de pruebas
@@ -24,8 +26,7 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    @app.route('/')
-    def hello():
-        return 'Hello, world!'
+    from . import importador
+    app.register_blueprint(importador.bp)
 
     return app
