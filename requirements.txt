@@ -1,2 +1,4 @@
 Flask==2.3.3
+numpy==1.25.2
+pandas==2.1.0
 Werkzeug==2.3.7
