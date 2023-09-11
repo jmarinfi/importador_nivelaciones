@@ -5,7 +5,7 @@
 Instrucciones para instalar y probar la aplicación:
 
 - Clonar repositorio localmente.
-- Crear entorno virtual.
+- Crear entorno virtual con python-3.11.
 - Instalar las dependencias con:
 
 ```console
