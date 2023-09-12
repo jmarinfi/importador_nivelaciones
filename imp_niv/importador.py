@@ -37,6 +37,7 @@ def home():
             filename = secure_filename(file.filename)
             file.save(os.path.join(
                 current_app.config['UPLOAD_FOLDER'], filename))
+            print(current_app.config['UPLOAD_FOLDER'])
             # Se procesa el GSI, capturando las posibles excepciones que puedan ocurrir
             try:
                 df_gsi, error_de_cierre, distancia_total, error_km_posteriori, tolerancia = procesar_gsi(
@@ -45,7 +46,7 @@ def home():
             except Exception as e:
                 return render_template('500_generic.html', e=e), 500
             return render_template(
-                'home.html', tables=[df_gsi.to_html(classes="table table-hover table-dark", header=True, index=False)],
+                'home.html', tables=df_gsi,
                 error_de_cierre=error_de_cierre,
                 distancia_total=distancia_total,
                 error_km_posteriori=error_km_posteriori,

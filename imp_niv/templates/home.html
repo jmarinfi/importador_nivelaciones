@@ -22,69 +22,56 @@
   </form>
 </div>
 
-<div class="container d-flex justify-content-around">
-{% if error_de_cierre %}
-  <div class="container">
-    <div class="card text-white bg-primary mb-3" style="max-width: 20rem;">
-      <div class="card-header">Error de Cierre</div>
-      <div class="card-body">
-        {% for key, value in error_de_cierre.items() %}
-          <h4 class="card-title"> Itinerario {{ key }}:</h4>
-          <p class="card-text">{{ value }}</p>
-        {% endfor %}
-      </div>
-    </div>
-  </div>
-{% endif %}
-
-{% if distancia_total %}
-  <div class="container">
-    <div class="card text-white bg-primary mb-3" style="max-width: 20rem;">
-      <div class="card-header">Distancia Total</div>
-      <div class="card-body">
-        {% for key, value in distancia_total.items() %}
-          <h4 class="card-title"> Itinerario {{ key }}:</h4>
-          <p class="card-text">{{ value }}</p>
-        {% endfor %}
-      </div>
-    </div>
-  </div>
-{% endif %}
-
-{% if error_km_posteriori %}
-  <div class="container">
-    <div class="card text-white bg-primary mb-3" style="max-width: 20rem;">
-      <div class="card-header">Error KM a Posteriori</div>
-      <div class="card-body">
-        {% for key, value in error_km_posteriori.items() %}
-          <h4 class="card-title"> Itinerario {{ key }}:</h4>
-          <p class="card-text">{{ value }}</p>
-        {% endfor %}
-      </div>
-    </div>
-  </div>
-{% endif %}
-
-{% if tolerancia %}
-  <div class="container">
-    <div class="card text-white bg-primary mb-3" style="max-width: 20rem;">
-      <div class="card-header">Tolerancia</div>
-      <div class="card-body">
-        {% for key, value in tolerancia.items() %}
-          <h4 class="card-title"> Itinerario {{ key }}:</h4>
-          <p class="card-text">{{ value }}</p>
-        {% endfor %}
-      </div>
-    </div>
-  </div>
-{% endif %}
-</div>
-
 {% if tables %}
 {% for table in tables %}
+<h3 class="container">Itinerario {{ table.0 }}:</h3>
+<div class="container d-flex justify-content-around">
+  {% if error_de_cierre %}
+    <div class="container">
+      <div class="card text-white bg-primary mb-3" style="max-width: 20rem;">
+        <div class="card-header">Error de Cierre</div>
+        <div class="card-body">
+          <p>{{ error_de_cierre[table.0] }}</p>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+  
+  {% if distancia_total %}
+    <div class="container">
+      <div class="card text-white bg-primary mb-3" style="max-width: 20rem;">
+        <div class="card-header">Distancia Total</div>
+        <div class="card-body">
+          <p>{{ distancia_total[table.0] }}</p>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+  
+  {% if error_km_posteriori %}
+    <div class="container">
+      <div class="card text-white bg-primary mb-3" style="max-width: 20rem;">
+        <div class="card-header">Error KM a Posteriori</div>
+        <div class="card-body">
+          <p>{{ error_km_posteriori[table.0] }}</p>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+  
+  {% if tolerancia %}
+    <div class="container">
+      <div class="card text-white bg-primary mb-3" style="max-width: 20rem;">
+        <div class="card-header">Tolerancia</div>
+        <div class="card-body">
+          <p>{{tolerancia[table.0] }}</p>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
 <div class="container">
-  <h3>Datos procesados:</h3>
-  {{ table|safe }}
+  {{ table.1.to_html(classes="table table-hover table-dark", header=True, index=False) | safe }}
 </div>
 {% endfor %}
 {% endif %}

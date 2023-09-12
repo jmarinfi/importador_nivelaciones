@@ -194,7 +194,7 @@ def add_dist_parcial_niv(df_separado):
     :return: Dataframe con la nueva columna.
     """
     # Calcular la columna 'Dist. acumulada'
-    df_separado['Dist. acumulada'] = 0
+    df_separado['Dist. acumulada'] = 0.0
 
     for index, row in df_separado.iterrows():
         if index > 0:
@@ -238,4 +238,6 @@ def procesar_gsi(file):
     df_gsi = add_dist_parcial_niv(df_gsi)
     df_gsi = add_cota_compensada_niv(df_gsi)
     df_gsi = df_gsi.replace(np.nan, '', regex=True)
-    return df_gsi, error_de_cierre, distancia_total, error_km_posteriori, tolerancia
+    df_gsi_list = [(itinerario, df_group)
+                   for (itinerario, df_group) in df_gsi.groupby('Itinerario')]
+    return df_gsi_list, error_de_cierre, distancia_total, error_km_posteriori, tolerancia

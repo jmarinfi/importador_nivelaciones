@@ -10,7 +10,11 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY='dev'
     )
-    UPLOAD_FOLDER = os.path.abspath('./files/gsi')
+    files_dir_path = './files'
+    gsi_dir_path = './files/gsi'
+    os.makedirs(files_dir_path, exist_ok=True)
+    os.makedirs(gsi_dir_path, exist_ok=True)
+    UPLOAD_FOLDER = os.path.abspath(gsi_dir_path)
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
     if test_config is None:
