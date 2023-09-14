@@ -10,6 +10,8 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY='dev'
     )
+
+    # Crea los directorios y define el directorio de subidas
     files_dir_path = './files'
     gsi_dir_path = './files/gsi'
     os.makedirs(files_dir_path, exist_ok=True)
