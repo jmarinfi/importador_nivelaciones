@@ -70,9 +70,17 @@
     </div>
   {% endif %}
 </div>
+<div class="container d-flex justify-content-end">
+  <button type="button" class="btn btn-primary m-4" id="{{ table.0 }}">Aceptar</button>
+  <button type="button" class="btn btn-primary m-4" id="{{ table.0 }}">Rechazar</button>
+</div>
 <div class="container">
   {{ table.1.to_html(classes="table table-hover table-dark", header=True, index=False) | safe }}
 </div>
 {% endfor %}
+<div class="container d-flex justify-content-end">
+  <button type="button" class="btn btn-primary m-4" id="all">Aceptar todos</button>
+  <button type="button" class="btn btn-primary m-4" id="all">Rechazar todos</button>
+</div>
 {% endif %}
 {% endblock %}

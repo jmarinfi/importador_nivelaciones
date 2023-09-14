@@ -1,7 +1,7 @@
 import functools
 import os
 from flask import (
-    Blueprint, current_app, flash, g, redirect, render_template, request, send_from_directory, session, url_for, send_file
+    Blueprint, current_app, flash, g, redirect, render_template, request, send_from_directory, session, url_for, send_file, session
 )
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import HTTPException
@@ -43,6 +43,12 @@ def home():
                 df_gsi, error_de_cierre, distancia_total, error_km_posteriori, tolerancia = procesar_gsi(
                     os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
                 )
+                session['tables'] = [(df[0], df[1].to_dict('list'))
+                                     for df in df_gsi]
+                session['error_de_cierre'] = error_de_cierre
+                session['distancia_total'] = distancia_total
+                session['error_km_posteriori'] = error_km_posteriori
+                session['tolerancia'] = tolerancia
             except Exception as e:
                 return render_template('500_generic.html', e=e), 500
             return render_template(
