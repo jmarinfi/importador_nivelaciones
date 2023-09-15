@@ -25,62 +25,71 @@
 {% if tables %}
 {% for table in tables %}
 <h3 class="container">Itinerario {{ table.0 }}:</h3>
-<div class="container d-flex justify-content-around">
-  {% if error_de_cierre %}
-    <div class="container">
-      <div class="card text-white bg-primary mb-3" style="max-width: 20rem;">
-        <div class="card-header">Error de Cierre</div>
-        <div class="card-body">
-          <p>{{ error_de_cierre[table.0] }}</p>
-        </div>
-      </div>
-    </div>
-  {% endif %}
-  
-  {% if distancia_total %}
-    <div class="container">
-      <div class="card text-white bg-primary mb-3" style="max-width: 20rem;">
-        <div class="card-header">Distancia Total</div>
-        <div class="card-body">
-          <p>{{ distancia_total[table.0] }}</p>
-        </div>
-      </div>
-    </div>
-  {% endif %}
-  
-  {% if error_km_posteriori %}
-    <div class="container">
-      <div class="card text-white bg-primary mb-3" style="max-width: 20rem;">
-        <div class="card-header">Error KM a Posteriori</div>
-        <div class="card-body">
-          <p>{{ error_km_posteriori[table.0] }}</p>
-        </div>
-      </div>
-    </div>
-  {% endif %}
-  
-  {% if tolerancia %}
-    <div class="container">
-      <div class="card text-white bg-primary mb-3" style="max-width: 20rem;">
-        <div class="card-header">Tolerancia</div>
-        <div class="card-body">
-          <p>{{tolerancia[table.0] }}</p>
-        </div>
-      </div>
-    </div>
-  {% endif %}
-</div>
-<div class="container d-flex justify-content-end">
-  <button type="button" class="btn btn-primary m-4" id="{{ table.0 }}">Aceptar</button>
-  <button type="button" class="btn btn-primary m-4" id="{{ table.0 }}">Rechazar</button>
-</div>
 <div class="container">
-  {{ table.1.to_html(classes="table table-hover table-dark", header=True, index=False) | safe }}
-</div>
-{% endfor %}
-<div class="container d-flex justify-content-end">
-  <button type="button" class="btn btn-primary m-4" id="all">Aceptar todos</button>
-  <button type="button" class="btn btn-primary m-4" id="all">Rechazar todos</button>
-</div>
+  <div class="container d-flex">
+    {% if error_de_cierre %}
+      <div class="container">
+        <div class="card text-white bg-primary mb-3" style="max-width: 20rem;">
+          <div class="card-header">Error de Cierre</div>
+          <div class="card-body">
+            <p>{{ error_de_cierre[table.0] }}</p>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+    
+    {% if distancia_total %}
+      <div class="container">
+        <div class="card text-white bg-primary mb-3" style="max-width: 20rem;">
+          <div class="card-header">Distancia Total</div>
+          <div class="card-body">
+            <p>{{ distancia_total[table.0] }}</p>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+    
+    {% if error_km_posteriori %}
+      <div class="container">
+        <div class="card text-white bg-primary mb-3" style="max-width: 20rem;">
+          <div class="card-header">Error KM a Posteriori</div>
+          <div class="card-body">
+            <p>{{ error_km_posteriori[table.0] }}</p>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+    
+    {% if tolerancia %}
+      <div class="container">
+        <div class="card text-white bg-primary mb-3" style="max-width: 20rem;">
+          <div class="card-header">Tolerancia</div>
+          <div class="card-body">
+            <p>{{tolerancia[table.0] }}</p>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+  <div class="container d-flex justify-content-end">
+    <form action="{{ url_for('importador.procesar') }}" method="post">
+      <fieldset>
+        <button type="submit" class="btn btn-primary m-4" id="aceptar" name="aceptar" value="{{ table.0 }}">Aceptar</button>
+        <button type="submit" class="btn btn-primary m-4" id="rechazar" name="rechazar" value="{{ table.0 }}">Rechazar</button>
+      </fieldset>
+    </form>
+  </div>
+  <div class="container">
+    {{ table.1.to_html(classes="table table-hover table-dark", header=True, index=False) | safe }}
+  </div>
+  {% endfor %}
+  <div class="container d-flex justify-content-end">
+    <form action="{{ url_for('importador.procesar') }}" method="post">
+      <fieldset>
+        <button type="submit" class="btn btn-primary m-4" id="aceptar-todos" name="aceptar-todos" value="todos">Aceptar todos</button>
+        <button type="submit" class="btn btn-primary m-4" id="rechazar-todos" name="rechazar-todos" value="todos">Rechazar todos</button>
+      </fieldset>
+    </form>
+  </div>
 {% endif %}
 {% endblock %}

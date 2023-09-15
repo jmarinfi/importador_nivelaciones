@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{{ request.form }}
+{% for key, value in request.form.items() %}
+<p>{{ key }}</p>
+<p>{{ value }}</p>
+{% endfor %}
+
+{{ session.error_de_cierre }}
+
+{% endblock %}
