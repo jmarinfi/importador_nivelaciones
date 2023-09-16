@@ -1,5 +1,9 @@
 import os
 from flask import Flask
+import pymysql
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
 
 
 def create_app(test_config=None):
@@ -8,7 +12,7 @@ def create_app(test_config=None):
     """
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
-        SECRET_KEY='dev'
+        SECRET_KEY=os.getenv('SECRET_KEY')
     )
 
     # Crea los directorios y define el directorio de subidas
@@ -34,5 +38,8 @@ def create_app(test_config=None):
 
     from . import importador
     app.register_blueprint(importador.bp)
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_LIMA_URL')
+    db.init_app(app)
 
     return app

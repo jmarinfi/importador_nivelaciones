@@ -1,4 +1,5 @@
 import math
+import os
 import re
 import numpy as np
 import pandas as pd
@@ -63,6 +64,9 @@ def busca_lineas_borradas_gsi(file):
         lineas = f.readlines()
         linea_actual = int(lineas[0][2:6])
         for line in lineas[1:-1]:
+            if line.startswith("505."):
+                linea_actual += 1
+                continue
             linea_actual += 1
             if linea_actual < int(line[2:6]):
                 lineas_faltantes.extend(

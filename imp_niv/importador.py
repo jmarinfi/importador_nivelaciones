@@ -1,14 +1,9 @@
-import datetime
-import functools
-import json
 import os
 from flask import (
-    Blueprint, current_app, flash, g, redirect, render_template, request, send_from_directory, session, url_for, send_file, g
+    Blueprint, current_app, flash, redirect, render_template, request, session, url_for, send_file
 )
 from werkzeug.utils import secure_filename
-from werkzeug.exceptions import HTTPException
-from imp_niv.utils_app import obtener_df_gsi, serializar_df_gsi
-
+from imp_niv.utils_app import obtener_csv_gsi, obtener_df_gsi, serializar_df_gsi
 from imp_niv.utils_gsi import procesar_gsi
 
 
@@ -74,7 +69,7 @@ def procesar():
     if request.form.get('rechazar'):
         itinerario_rechazado_str = request.form.get('rechazar')
         itinerario_rechazado_int = int(itinerario_rechazado_str)
-        df_gsi = obtener_df_gsi(session['df_gsi_path'])
+        df_gsi = obtener_df_gsi(session.get('df_gsi_path'))
         df_gsi = [(itinerario[0], itinerario[1])
                   for itinerario in df_gsi if itinerario[0] != itinerario_rechazado_int]
         session['error_de_cierre'] = {int(k): v for k, v in session.get(
@@ -92,8 +87,19 @@ def procesar():
                                error_km_posteriori=session.get(
                                    'error_km_posteriori'),
                                tolerancia=session.get('tolerancia'))
-    if request.form.get('aceptar'):
-        return 'TODO aceptar 1 itinerario'
+    if request.form.get('aceptar') or request.form.get('fechaInput'):
+        if not request.form.get('fechaInput'):
+            session['itinerario_aceptado_str'] = request.form.get('aceptar')
+            session['itinerario_aceptado_int'] = int(
+                session.get('itinerario_aceptado_str'))
+            return render_template('procesar.html')
+        if request.form.get('fechaInput'):
+            df_gsi = obtener_df_gsi(session.get('df_gsi_path'))
+            fecha = request.form.get('fechaInput')
+            df_gsi = [(itinerario[0], itinerario[1])
+                      for itinerario in df_gsi if itinerario[0] == session.get('itinerario_aceptado_int')]
+            csv_gsi, ids_inexistentes = obtener_csv_gsi(df_gsi, fecha)
+            return render_template('procesar.html', csv_gsi=csv_gsi, ids_inexistentes=ids_inexistentes)
     if request.form.get('aceptar-todos'):
         return 'TODO aceptar todos los itinerarios'
     return redirect(url_for('importador.home'))
