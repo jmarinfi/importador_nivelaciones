@@ -87,9 +87,9 @@ def enviar_csv_ids_inex(df, itinerario):
     session['csv_path'] = csv_path
     df.to_csv(csv_path, sep=';', header=False, index=False)
 
-    # local_file_path = csv_path
-    # remote_file_name = f'csv_ids_inex_{itinerario}_' + csv_filename
-    # enviar_por_ftp(local_file_path, remote_file_name)
+    local_file_path = csv_path
+    remote_file_name = f'csv_ids_inex_{itinerario}_' + csv_filename
+    enviar_por_ftp(local_file_path, remote_file_name)
 
 
 def obtener_csv_gsi(df_gsi, fecha):
