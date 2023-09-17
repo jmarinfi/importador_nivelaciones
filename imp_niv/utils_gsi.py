@@ -1,9 +1,19 @@
 import math
 import os
 import re
+from flask import flash
 import numpy as np
 import pandas as pd
 from werkzeug.exceptions import HTTPException
+
+
+def clean_file(file):
+    with open(file, 'rb') as f:
+        for line in f:
+            try:
+                yield line.decode('utf-8')
+            except:
+                yield line.decode('utf-8', 'ignore')
 
 
 def abre_gsi(file):
@@ -19,35 +29,34 @@ def abre_gsi(file):
     # Lista para almacenar los datos de las filas
     tabla = []
 
-    # Abre el GSI
-    with open(file, 'r') as f:
-        itinerario = 0
-        metodo = None
+    itinerario = 0
+    metodo = None
+    cleaned_lines = clean_file(file)
 
-        for line in f:
-            # Elimina los espacios en blanco al inicio y al final de la línea
-            line = line.strip()
-            # Si la línea comienza con "505.", se omite
-            if line.startswith("505."):
-                continue
-            # Comprueba si la línea contiene información del método e inicio de itinerario
-            match = re.match(r"^41\d{4}\+\?*\.{5,6}(\d+)$", line)
-            if match:
-                metodo = {
-                    "1": "EF",
-                    "2": "EFFE",
-                    "3": "aEF",
-                    "4": "aEFFE",
-                    "10": "Comprob_y_ajuste"
-                }.get(match.group(1), None)
-                itinerario += 1
-                continue
-            # Reemplaza los "-" por " -"
-            line = line.replace("-", " -")
-            # Divide la línea en columnas utilizando los separadores
-            columns = [metodo, itinerario] + re.split(patron_separadores, line)
-            # Añade la fila a los datos
-            tabla.append(columns)
+    for line in cleaned_lines:
+        # Elimina los espacios en blanco al inicio y al final de la línea
+        line = line.strip()
+        # Si la línea comienza con "505.", se omite
+        if line.startswith("505."):
+            continue
+        # Comprueba si la línea contiene información del método e inicio de itinerario
+        match = re.match(r"^41\d{4}\+\?*\.{5,6}(\d+)$", line)
+        if match:
+            metodo = {
+                "1": "EF",
+                "2": "EFFE",
+                "3": "aEF",
+                "4": "aEFFE",
+                "10": "Comprob_y_ajuste"
+            }.get(match.group(1), None)
+            itinerario += 1
+            continue
+        # Reemplaza los "-" por " -"
+        line = line.replace("-", " -")
+        # Divide la línea en columnas utilizando los separadores
+        columns = [metodo, itinerario] + re.split(patron_separadores, line)
+        # Añade la fila a los datos
+        tabla.append(columns)
     return pd.DataFrame(tabla)
 
 
@@ -229,10 +238,9 @@ def add_cota_compensada_niv(df_dist_acum):
 
 def procesar_gsi(file):
     df_gsi = abre_gsi(file)
-    # lineas_borradas = busca_lineas_borradas_gsi(file)
-    # if len(lineas_borradas) > 0:
-    #     raise HTTPException(
-    #         "Se han detectado líneas borradas: " + str(lineas_borradas))
+    lineas_borradas = busca_lineas_borradas_gsi(file)
+    if len(lineas_borradas) > 0:
+        flash("Se han detectado líneas borradas: " + str(lineas_borradas))
     df_gsi = ordena_df_gsi(df_gsi)
     df_gsi = separa_en_columnas(df_gsi)
     error_de_cierre = get_error_cierre_niv(df_gsi)
