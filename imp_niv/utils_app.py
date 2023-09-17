@@ -1,5 +1,7 @@
+from ftplib import FTP
 import os
-from flask import current_app, session
+import re
+from flask import current_app, send_file, session
 import pandas as pd
 
 import json
@@ -7,12 +9,21 @@ import json
 from imp_niv.utils_db import get_dict_id_externo_nom_sensor, get_lectura_inicial, get_tres_ultimas_lecturas, get_ultima_referencia
 
 
-def obtener_df_gsi(path):
+def deserializar_df_gsi(path):
     with open(path, 'r') as file:
         lista_serializada = json.load(file)
         df_gsi = [(itinerario[0], pd.DataFrame(json.loads(itinerario[1])))
                   for itinerario in lista_serializada]
     return df_gsi
+
+
+def deserializar_csv_gsi_list(path):
+    return deserializar_df_gsi(path)
+
+
+def deserializar_csv_gsi(path):
+    with open(path, 'r') as file:
+        return pd.DataFrame(json.loads(file.read()))
 
 
 def serializar_df_gsi(df_gsi):
@@ -26,6 +37,61 @@ def serializar_df_gsi(df_gsi):
         outfile.write(lista_serializada_json)
 
 
+def serializar_csv_gsi(csv_gsi, itinerario):
+    df_serializado = csv_gsi.to_json()
+    df_serializado_path = os.path.join(
+        current_app.config['UPLOAD_FOLDER'], f'csv_gsi_{itinerario}_' + session.get('df_gsi_filename'))
+    session['csv_gsi_path'] = df_serializado_path
+    with open(df_serializado_path, 'w') as outfile:
+        outfile.write(df_serializado)
+
+
+def serializar_csv_gsi_list(csv_gsi_list):
+    lista_serializada = [(itinerario[0], itinerario[1].to_json())
+                         for itinerario in csv_gsi_list]
+    lista_serializada_json = json.dumps(lista_serializada)
+    lista_serializada_json_path = os.path.join(
+        current_app.config['UPLOAD_FOLDER'], 'csv_gsi_list_' + session.get('df_gsi_filename'))
+    session['csv_gsi_list_path'] = lista_serializada_json_path
+    with open(lista_serializada_json_path, 'w') as outfile:
+        outfile.write(lista_serializada_json)
+
+
+def enviar_por_ftp(local_file_path, remote_file_name):
+    with FTP(host=os.getenv('FTP_MONC_SERV'), user=os.getenv('FTP_MONC_USER'), passwd=os.getenv('FTP_MONC_PASSW')) as ftp:
+        with open(local_file_path, 'rb') as text_file:
+            ftp.cwd('/LIMA/Linea_2')
+            ftp.storlines('STOR ' + remote_file_name, text_file)
+
+
+def enviar_csv(df, itinerario):
+    filename = session.get('df_gsi_filename')
+    csv_filename = re.sub(r'\.gsi', '.csv',
+                          filename, flags=re.IGNORECASE)
+    csv_path = os.path.join(
+        current_app.config['UPLOAD_FOLDER'], f'csv_{itinerario}_' + csv_filename)
+    session['csv_path'] = csv_path
+    df.to_csv(csv_path, sep=';', header=False, index=False)
+
+    local_file_path = csv_path
+    remote_file_name = f'csv_{itinerario}_' + csv_filename
+    enviar_por_ftp(local_file_path, remote_file_name)
+
+
+def enviar_csv_ids_inex(df, itinerario):
+    filename = session.get('df_gsi_filename')
+    csv_filename = re.sub(r'\.gsi', '.csv',
+                          filename, flags=re.IGNORECASE)
+    csv_path = os.path.join(
+        current_app.config['UPLOAD_FOLDER'], f'csv_ids_inex_{itinerario}_' + csv_filename)
+    session['csv_path'] = csv_path
+    df.to_csv(csv_path, sep=';', header=False, index=False)
+
+    local_file_path = csv_path
+    remote_file_name = f'csv_ids_inex_{itinerario}_' + csv_filename
+    enviar_por_ftp(local_file_path, remote_file_name)
+
+
 def obtener_csv_gsi(df_gsi, fecha):
     try:
         df = df_gsi[0][1]
@@ -34,6 +100,7 @@ def obtener_csv_gsi(df_gsi, fecha):
     df = df[['Nombre campo', 'Cota comp.']]
     df = df[df['Cota comp.'] != '']
     df['FECHA'] = fecha
+    df['FECHA'] = pd.to_datetime(df['FECHA']).dt.strftime('%d/%m/%Y %H:%M:%S')
     df = df[['FECHA', 'Nombre campo', 'Cota comp.']]
     nombres_campo = list(df['Nombre campo'])
     dict_nom_sensor = get_dict_id_externo_nom_sensor(nombres_campo)

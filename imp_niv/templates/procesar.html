@@ -22,6 +22,14 @@
     <h3 class="container">Itinerario {{session.get('itinerario_aceptado_str')}}</h3>
     <div class="container">
         <h4 class="container">Reporte:</h4>
+        <div class="container d-flex justify-content-end">
+            <form action="{{ url_for('importador.enviar') }}" method="post">
+              <fieldset>
+                <button type="submit" class="btn btn-primary m-4" id="aceptar" name="aceptar" value="{{session.get('itinerario_aceptado_str')}}">Aceptar</button>
+                <button type="submit" class="btn btn-primary m-4" id="rechazar" name="rechazar" value="{{session.get('itinerario_aceptado_str')}}">Rechazar</button>
+              </fieldset>
+            </form>
+        </div>
         <div class="container table-responsive">
             {{ csv_gsi.to_html(classes="table table-hover table-dark w-auto", header=True, index=False, justify="left") | safe }}
         </div>
@@ -38,6 +46,14 @@
         <h3 class="container">Itinerario {{ itinerario[0] }}</h3>
         <div class="container">
             <h4 class="container">Reporte:</h4>
+            <div class="container d-flex justify-content-end">
+                <form action="{{ url_for('importador.enviar') }}" method="post">
+                  <fieldset>
+                    <button type="submit" class="btn btn-primary m-4" id="aceptar" name="aceptar" value="{{ itinerario[0] }}">Aceptar</button>
+                    <button type="submit" class="btn btn-primary m-4" id="rechazar" name="rechazar" value="{{ itinerario[0] }}">Rechazar</button>
+                  </fieldset>
+                </form>
+            </div>
             <div class="container table-responsive">
                 {{ itinerario[1].to_html(classes="table table-hover table-dark w-auto", header=True, index=False, justify="left") | safe }}
             </div>
@@ -49,6 +65,14 @@
             {% endif %}
         </div>
         {% endfor %}
+        <div class="container d-flex justify-content-end">
+            <form action="{{ url_for('importador.enviar') }}" method="post">
+              <fieldset>
+                <button type="submit" class="btn btn-primary m-4" id="aceptar-todos" name="aceptar-todos" value="todos">Aceptar todos</button>
+                <button type="submit" class="btn btn-primary m-4" id="rechazar-todos" name="rechazar-todos" value="todos">Rechazar todos</button>
+              </fieldset>
+            </form>
+        </div>
     {% endif %}
 
 {% endif %}

@@ -3,7 +3,7 @@ from flask import (
     Blueprint, current_app, flash, redirect, render_template, request, session, url_for, send_file
 )
 from werkzeug.utils import secure_filename
-from imp_niv.utils_app import obtener_csv_gsi, obtener_df_gsi, serializar_df_gsi
+from imp_niv.utils_app import deserializar_csv_gsi, deserializar_csv_gsi_list, deserializar_df_gsi, enviar_csv, enviar_csv_ids_inex, obtener_csv_gsi, serializar_csv_gsi, serializar_csv_gsi_list, serializar_df_gsi
 from imp_niv.utils_gsi import procesar_gsi
 
 
@@ -69,7 +69,7 @@ def procesar():
     if request.form.get('rechazar'):
         itinerario_rechazado_str = request.form.get('rechazar')
         itinerario_rechazado_int = int(itinerario_rechazado_str)
-        df_gsi = obtener_df_gsi(session.get('df_gsi_path'))
+        df_gsi = deserializar_df_gsi(session.get('df_gsi_path'))
         df_gsi = [(itinerario[0], itinerario[1])
                   for itinerario in df_gsi if itinerario[0] != itinerario_rechazado_int]
         session['error_de_cierre'] = {int(k): v for k, v in session.get(
@@ -94,26 +94,73 @@ def procesar():
                 session.get('itinerario_aceptado_str'))
             return render_template('procesar.html')
         if request.form.get('fechaInput'):
-            df_gsi = obtener_df_gsi(session.get('df_gsi_path'))
+            df_gsi = deserializar_df_gsi(session.get('df_gsi_path'))
             fecha = request.form.get('fechaInput')
             itinerario_aceptado = session.get('itinerario_aceptado_str')
             if itinerario_aceptado != 'todos':
                 df_gsi = [(itinerario[0], itinerario[1])
                           for itinerario in df_gsi if itinerario[0] == session.get('itinerario_aceptado_int')]
                 csv_gsi, ids_inexistentes = obtener_csv_gsi(df_gsi, fecha)
+                serializar_csv_gsi(csv_gsi, itinerario_aceptado)
+                try:
+                    enviar_csv_ids_inex(ids_inexistentes, itinerario_aceptado)
+                except Exception as e:
+                    flash(
+                        'No se ha podido enviar el CSV de ids inexistentes por FTP, pero hay una copia en el servidor', category='error')
                 return render_template('procesar.html', csv_gsi=csv_gsi, ids_inexistentes=ids_inexistentes)
             else:
                 csv_gsi_list = []
                 for itinerario in df_gsi:
-                    print(itinerario)
                     csv_gsi, ids_inexistentes = obtener_csv_gsi(
                         itinerario, fecha)
                     csv_gsi_list.append(
                         (itinerario[0], csv_gsi, ids_inexistentes))
-                    print(csv_gsi_list)
+                    serializar_csv_gsi_list(csv_gsi_list)
+                    try:
+                        enviar_csv_ids_inex(ids_inexistentes, itinerario[0])
+                    except Exception as e:
+                        flash(
+                            'No se ha podido enviar el CSV de ids inexistentes por FTP, pero hay una copia en el servidor', category='error')
                 return render_template('procesar.html', csv_gsi_list=csv_gsi_list)
     if request.form.get('aceptar-todos'):
         session['itinerario_aceptado_str'] = 'todos'
         session['itinerario_aceptado_int'] = 0
         return render_template('procesar.html')
     return redirect(url_for('importador.home'))
+
+
+@bp.route('/enviar', methods=['POST'])
+def enviar():
+    if request.form.get('aceptar'):
+        itinerario_aceptado = int(request.form.get('aceptar'))
+        csv_gsi = deserializar_csv_gsi(session.get('csv_gsi_path'))
+        csv_gsi = csv_gsi[['FECHA', 'NOM_SENSOR', 'Cota comp.']]
+        try:
+            enviar_csv(csv_gsi, itinerario_aceptado)
+        except Exception as e:
+            return render_template(
+                '500_generic.html',
+                e=e,
+                message='No se ha podido enviar el archivo. Vuelve a intentarlo o descarga el CSV e impórtalo manualmente'
+            )
+        return render_template('enviar.html', csv=csv_gsi)
+
+    if request.form.get('aceptar-todos'):
+        csv_gsi_list = deserializar_csv_gsi_list(
+            session.get('csv_gsi_list_path'))
+        print(csv_gsi_list)
+        csv_list = [(itinerario[0], itinerario[1][['FECHA', 'NOM_SENSOR', 'Cota comp.']])
+                    for itinerario in csv_gsi_list]
+        for csv in csv_list:
+            enviar_csv(csv[1], csv[0])
+        print(csv_list)
+        return render_template('enviar.html', csv_list=csv_list)
+
+    flash('El reporte rechazado no se ha importado', category='warning')
+    return redirect(url_for('importador.home'))
+
+
+@bp.route('/descargar_csv')
+def descargar_csv():
+    filepath = session.get('csv_path')
+    return send_file(filepath, as_attachment=True)
