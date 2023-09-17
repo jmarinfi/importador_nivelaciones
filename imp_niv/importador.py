@@ -96,10 +96,24 @@ def procesar():
         if request.form.get('fechaInput'):
             df_gsi = obtener_df_gsi(session.get('df_gsi_path'))
             fecha = request.form.get('fechaInput')
-            df_gsi = [(itinerario[0], itinerario[1])
-                      for itinerario in df_gsi if itinerario[0] == session.get('itinerario_aceptado_int')]
-            csv_gsi, ids_inexistentes = obtener_csv_gsi(df_gsi, fecha)
-            return render_template('procesar.html', csv_gsi=csv_gsi, ids_inexistentes=ids_inexistentes)
+            itinerario_aceptado = session.get('itinerario_aceptado_str')
+            if itinerario_aceptado != 'todos':
+                df_gsi = [(itinerario[0], itinerario[1])
+                          for itinerario in df_gsi if itinerario[0] == session.get('itinerario_aceptado_int')]
+                csv_gsi, ids_inexistentes = obtener_csv_gsi(df_gsi, fecha)
+                return render_template('procesar.html', csv_gsi=csv_gsi, ids_inexistentes=ids_inexistentes)
+            else:
+                csv_gsi_list = []
+                for itinerario in df_gsi:
+                    print(itinerario)
+                    csv_gsi, ids_inexistentes = obtener_csv_gsi(
+                        itinerario, fecha)
+                    csv_gsi_list.append(
+                        (itinerario[0], csv_gsi, ids_inexistentes))
+                    print(csv_gsi_list)
+                return render_template('procesar.html', csv_gsi_list=csv_gsi_list)
     if request.form.get('aceptar-todos'):
-        return 'TODO aceptar todos los itinerarios'
+        session['itinerario_aceptado_str'] = 'todos'
+        session['itinerario_aceptado_int'] = 0
+        return render_template('procesar.html')
     return redirect(url_for('importador.home'))

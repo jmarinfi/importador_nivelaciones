@@ -27,7 +27,10 @@ def serializar_df_gsi(df_gsi):
 
 
 def obtener_csv_gsi(df_gsi, fecha):
-    df = df_gsi[0][1]
+    try:
+        df = df_gsi[0][1]
+    except TypeError as e:
+        df = df_gsi[1]
     df = df[['Nombre campo', 'Cota comp.']]
     df = df[df['Cota comp.'] != '']
     df['FECHA'] = fecha

@@ -2,7 +2,7 @@
 
 {% block content %}
 
-{% if csv_gsi is not defined %}
+{% if csv_gsi is not defined and csv_gsi_list is not defined %}
 
 <div class="container">
     <form action="{{ url_for('importador.procesar') }}" method="post">
@@ -18,20 +18,38 @@
 
 {% else %}
 
-<h3 class="container">Itinerario {{session.get('itinerario_aceptado_str')}}</h3>
-<div class="container">
-    <h4 class="container">Reporte:</h4>
+    {% if csv_gsi_list is not defined %}
+    <h3 class="container">Itinerario {{session.get('itinerario_aceptado_str')}}</h3>
     <div class="container">
-        {{ csv_gsi.to_html(classes="table table-hover table-primary", header=True, index=False, justify="left") | safe }}
+        <h4 class="container">Reporte:</h4>
+        <div class="container">
+            {{ csv_gsi.to_html(classes="table table-hover table-primary w-auto", header=True, index=False, justify="left") | safe }}
+        </div>
+        {% if not ids_inexistentes.empty %}
+        <h4 class="container">Los siguientes ID no existen en la base de datos:</h4>
+        <div class="container">
+            {{ ids_inexistentes.to_html(classes="table table-hover table-primary", header=True, index=False, justify="left") | safe }}
+        </div>
+        {% endif %}
     </div>
-    {% if not ids_inexistentes.empty %}
-    <h4 class="container">Los siguientes ID no existen en la base de datos:</h4>
-    <div class="container">
-        {{ ids_inexistentes.to_html(classes="table table-hover table-primary", header=True, index=False, justify="left") | safe }}
-    </div>
-    {% endif %}
-</div>
 
+    {% else %}
+        {% for itinerario in csv_gsi_list %}
+        <h3 class="container">Itinerario {{ itinerario[0] }}</h3>
+        <div class="container">
+            <h4 class="container">Reporte:</h4>
+            <div class="container">
+                {{ itinerario[1].to_html(classes="table table-hover table-primary w-auto", header=True, index=False, justify="left") | safe }}
+            </div>
+            {% if not itinerario[2].empty %}
+            <h4 class="container">Los siguientes ID no existen en la base de datos:</h4>
+            <div class="container">
+                {{ itinerario[2].to_html(classes="table table-hover table-primary", header=True, index=False, justify="left") | safe }}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% endif %}
 
 {% endif %}
 
