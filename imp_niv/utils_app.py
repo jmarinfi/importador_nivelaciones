@@ -36,18 +36,13 @@ def obtener_csv_gsi(df_gsi, fecha):
     df['FECHA'] = fecha
     df = df[['FECHA', 'Nombre campo', 'Cota comp.']]
     nombres_campo = list(df['Nombre campo'])
-    print(nombres_campo)
     dict_nom_sensor = get_dict_id_externo_nom_sensor(nombres_campo)
-    print(dict_nom_sensor)
     df['NOM_SENSOR'] = df['Nombre campo'].map(dict_nom_sensor)
     df = df[['FECHA', 'Nombre campo', 'NOM_SENSOR', 'Cota comp.']]
     df_ids_inexistentes = df[df['NOM_SENSOR'].isnull()].copy()
     df_ids_existentes = df[df['NOM_SENSOR'].notnull()].copy()
-    print(df_ids_existentes)
-    print(df_ids_inexistentes)
     if not df_ids_existentes.empty:
         nom_sensor_list = list(df_ids_existentes['NOM_SENSOR'])
-        print(nom_sensor_list)
         dict_ultimas_lecturas, dict_penultimas_lecturas, dict_antepenultimas_lecturas = get_tres_ultimas_lecturas(
             nom_sensor_list)
         df_ids_existentes['ULT_LECT'] = df_ids_existentes['NOM_SENSOR'].map(
@@ -56,7 +51,6 @@ def obtener_csv_gsi(df_gsi, fecha):
             dict_penultimas_lecturas)
         df_ids_existentes['ANTEPENULT_LECT'] = df_ids_existentes['NOM_SENSOR'].map(
             dict_antepenultimas_lecturas)
-        print(df_ids_existentes)
         dict_fecha_ultima_referencia, dict_lectura_ultima_referencia, dict_medida_ultima_referencia = get_ultima_referencia(
             nom_sensor_list)
         df_ids_existentes['FECHA_REF'] = df_ids_existentes['NOM_SENSOR'].map(
@@ -65,7 +59,6 @@ def obtener_csv_gsi(df_gsi, fecha):
             dict_lectura_ultima_referencia)
         df_ids_existentes['MEDIDA_REF'] = df_ids_existentes['NOM_SENSOR'].map(
             dict_medida_ultima_referencia)
-        print(df_ids_existentes)
         dict_fecha_inicial, dict_lectura_inicial, dict_medida_inicial = get_lectura_inicial(
             nom_sensor_list)
 
@@ -90,7 +83,6 @@ def obtener_csv_gsi(df_gsi, fecha):
             replace_lectura_based_on_condition, axis=1)
         df_ids_existentes['MEDIDA_REF'] = df_ids_existentes.apply(
             replace_medida_based_on_condition, axis=1)
-        print(df_ids_existentes)
 
         df_ids_existentes['MEDIDA'] = (df_ids_existentes['Cota comp.'].astype(
             float) - df_ids_existentes['LECTURA_REF'].astype(float)) * 1000 + df_ids_existentes['MEDIDA_REF'].astype(float)
