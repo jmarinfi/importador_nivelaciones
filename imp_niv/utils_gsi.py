@@ -7,15 +7,6 @@ import pandas as pd
 from werkzeug.exceptions import HTTPException
 
 
-def clean_file(file):
-    with open(file, 'rb') as f:
-        for line in f:
-            try:
-                yield line.decode('utf-8')
-            except:
-                yield line.decode('utf-8', 'ignore')
-
-
 def abre_gsi(file):
     """
     Método que lee un archivo GSI y devuelve un dataframe con ese mismo contenido.
@@ -23,40 +14,35 @@ def abre_gsi(file):
     :return: dataframe: datos del archivo ordenados en una tabla. Se añaden 2 columnas, una con el método
     de nivelación y otra con el número del itinerario.
     """
-    # Define los separadores de columna y el patrón
     separadores = [" ", "...", "..", ".", "+"]
     patron_separadores = "|".join(re.escape(sep) for sep in separadores)
-    # Lista para almacenar los datos de las filas
-    tabla = []
 
+    tabla = []
     itinerario = 0
     metodo = None
-    cleaned_lines = clean_file(file)
 
-    for line in cleaned_lines:
-        # Elimina los espacios en blanco al inicio y al final de la línea
-        line = line.strip()
-        # Si la línea comienza con "505.", se omite
-        if line.startswith("505."):
-            continue
-        # Comprueba si la línea contiene información del método e inicio de itinerario
-        match = re.match(r"^41\d{4}\+\?*\.{5,6}(\d+)$", line)
-        if match:
-            metodo = {
-                "1": "EF",
-                "2": "EFFE",
-                "3": "aEF",
-                "4": "aEFFE",
-                "10": "Comprob_y_ajuste"
-            }.get(match.group(1), None)
-            itinerario += 1
-            continue
-        # Reemplaza los "-" por " -"
-        line = line.replace("-", " -")
-        # Divide la línea en columnas utilizando los separadores
-        columns = [metodo, itinerario] + re.split(patron_separadores, line)
-        # Añade la fila a los datos
-        tabla.append(columns)
+    with open(file, 'r', encoding='utf-8', errors='ignore') as f:
+        for line in f:
+            if line.startswith("505."):
+                continue
+
+            line = line.strip()
+
+            match = re.match(r"^41\d{4}\+\?*\.{5,6}(\d+)$", line)
+            if match:
+                metodo = {
+                    "1": "EF",
+                    "2": "EFFE",
+                    "3": "aEF",
+                    "4": "aEFFE",
+                    "10": "Comprob_y_ajuste"
+                }.get(match.group(1), None)
+                itinerario += 1
+                continue
+
+            line = line.replace("-", " -")
+            columns = [metodo, itinerario] + re.split(patron_separadores, line)
+            tabla.append(columns)
     return pd.DataFrame(tabla)
 
 
@@ -69,20 +55,27 @@ def busca_lineas_borradas_gsi(file):
     :return: lineas_faltantes: Lista con los números de línea faltantes.
     """
     lineas_faltantes = []
-    with open(file, 'r') as f:
+    linea_actual = 0
+
+    with open(file, 'r', encoding='utf-8', errors='ignore') as f:
         lineas = f.readlines()
-        linea_actual = int(lineas[0][2:6])
-        for line in lineas[1:-1]:
-            if line.startswith("505."):
+        try:
+            linea_actual = int(lineas[0][2:6])
+        except:
+            linea_actual = 1
+
+        for linea in lineas:
+            if linea.startswith("505."):
                 linea_actual += 1
                 continue
+
             linea_actual += 1
-            if linea_actual < int(line[2:6]):
+            if linea_actual < int(linea[2:6]):
                 lineas_faltantes.extend(
-                    [f"{i:04}" for i in range(linea_actual, int(line[2:6]))]
+                    [f"{i:04}" for i in range(linea_actual, int(linea[2:6]))]
                 )
-                linea_actual = int(line[2:6])
-        return lineas_faltantes
+                linea_actual = int(linea[2:6])
+    return lineas_faltantes
 
 
 def ordena_df_gsi(df_archivo):
