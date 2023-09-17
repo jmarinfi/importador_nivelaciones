@@ -106,7 +106,7 @@ def procesar():
                     enviar_csv_ids_inex(ids_inexistentes, itinerario_aceptado)
                 except Exception as e:
                     flash(
-                        'No se ha podido enviar el CSV de ids inexistentes por FTP, pero hay una copia en el servidor', category='error')
+                        'No se ha podido enviar el CSV de ids inexistentes', category='error')
                 return render_template('procesar.html', csv_gsi=csv_gsi, ids_inexistentes=ids_inexistentes)
             else:
                 csv_gsi_list = []
@@ -120,7 +120,7 @@ def procesar():
                         enviar_csv_ids_inex(ids_inexistentes, itinerario[0])
                     except Exception as e:
                         flash(
-                            'No se ha podido enviar el CSV de ids inexistentes por FTP, pero hay una copia en el servidor', category='error')
+                            'No se ha podido enviar el CSV de ids inexistentes', category='error')
                 return render_template('procesar.html', csv_gsi_list=csv_gsi_list)
     if request.form.get('aceptar-todos'):
         session['itinerario_aceptado_str'] = 'todos'
