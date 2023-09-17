@@ -229,10 +229,10 @@ def add_cota_compensada_niv(df_dist_acum):
 
 def procesar_gsi(file):
     df_gsi = abre_gsi(file)
-    lineas_borradas = busca_lineas_borradas_gsi(file)
-    if len(lineas_borradas) > 0:
-        raise HTTPException(
-            "Se han detectado líneas borradas: " + str(lineas_borradas))
+    # lineas_borradas = busca_lineas_borradas_gsi(file)
+    # if len(lineas_borradas) > 0:
+    #     raise HTTPException(
+    #         "Se han detectado líneas borradas: " + str(lineas_borradas))
     df_gsi = ordena_df_gsi(df_gsi)
     df_gsi = separa_en_columnas(df_gsi)
     error_de_cierre = get_error_cierre_niv(df_gsi)
