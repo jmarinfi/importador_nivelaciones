@@ -6,8 +6,20 @@ from werkzeug.utils import secure_filename
 from imp_niv.utils_app import deserializar_csv_gsi, deserializar_csv_gsi_list, deserializar_df_gsi, enviar_csv, enviar_csv_ids_inex, obtener_csv_gsi, serializar_csv_gsi, serializar_csv_gsi_list, serializar_df_gsi
 from imp_niv.utils_gsi import procesar_gsi
 
-
+# Extensiones de archivo permitidas
 ALLOWED_EXTENSIONS = {'gsi', }
+
+# Constantes para las claves de sesión
+DF_GSI_FILENAME = 'df_gsi_filename'
+ERROR_DE_CIERRE = 'error_de_cierre'
+DISTANCIA_TOTAL = 'distancia_total'
+ERROR_KM_POSTERIORI = 'error_km_posteriori'
+TOLERANCIA = 'tolerancia'
+DF_GSI_PATH = 'df_gsi_path'
+ITINERARIO_ACEPTADO_STR = 'itinerario_aceptado_str'
+ITINERARIO_ACEPTADO_INT = 'itinerario_aceptado_int'
+CSV_GSI_PATH = 'csv_gsi_path'
+CSV_GSI_LIST_PATH = 'csv_gsi_list_path'
 
 bp = Blueprint('importador', __name__)
 
@@ -18,44 +30,67 @@ def allowed_file(filename):
 
 @bp.route('/', methods=('GET', 'POST'))
 def home():
+    # Si la solicitud es POST, procesamos el archivo enviado
     if request.method == 'POST':
-        # Código que se ejecuta en caso que la llamada al endpoint provenga del formulario del inicio
-        if 'formFile' not in request.files:
-            # En caso que no se haya seleccionado ningún GSI, se muestra un aviso
-            flash('No hay archivo', category='error')
-            return redirect(request.url)
-        # Se recupera el GSI del request
-        file = request.files['formFile']
-        if file.filename == '':
-            # En caso que se haya seleccionado un archivo vacío, se muestra un aviso
-            flash('No hay ningún archivo seleccionado', category='error')
-            return redirect(request.url)
-        if file and allowed_file(file.filename):
-            # En caso que el archivo contenga una extensión que sea "gsi" o "GSI", se almacena en disco, se procesa y se muestra en la página de inicio
-            session['df_gsi_filename'] = secure_filename(file.filename)
-            file_path = os.path.join(
-                current_app.config['UPLOAD_FOLDER'], session.get('df_gsi_filename'))
-            file.save(file_path)
-            # Se procesa el GSI, capturando las posibles excepciones que puedan ocurrir
-            try:
-                df_gsi, error_de_cierre, distancia_total, error_km_posteriori, tolerancia = procesar_gsi(
-                    file_path)
-                session['error_de_cierre'] = error_de_cierre
-                session['distancia_total'] = distancia_total
-                session['error_km_posteriori'] = error_km_posteriori
-                session['tolerancia'] = tolerancia
-                serializar_df_gsi(df_gsi)
-            except Exception as e:
-                return render_template('500_generic.html', e=e), 500
-            return render_template(
-                'home.html', tables=df_gsi,
-                error_de_cierre=error_de_cierre,
-                distancia_total=distancia_total,
-                error_km_posteriori=error_km_posteriori,
-                tolerancia=tolerancia
-            )
-        flash('Archivo no válido. Sólo se admiten archivos gsi', category='error')
+        return handle_post_request()
+
+    # Si no es POST, simplemente renderizamos la página de inicio
     return render_template('home.html')
+
+
+def handle_post_request():
+    """Maneja las solicitudes POST al endpoint de inicio."""
+
+    # Verificar si el archivo está presente en la solicitud
+    if 'formFile' not in request.files:
+        flash('No hay archivo', category='error')
+        return redirect(request.url)
+
+    file = request.files['formFile']
+
+    # Verificar si el nombre del archivo está vacío
+    if file.filename == '':
+        flash('No hay ningún archivo seleccionado', category='error')
+        return redirect(request.url)
+
+    # Procesar el archivo si tiene una extensión válida
+    if file and allowed_file(file.filename):
+        return process_and_render(file)
+
+    # Mostrar un mensaje de error si el archivo no tiene una extensión válida
+    flash('Archivo no válido. Sólo se admiten archivos gsi', category='error')
+    return redirect(request.url)
+
+
+def process_and_render(file):
+    """Procesa el archivo GSI y renderiza los resultados."""
+
+    # Guardar el archivo en el directorio de subida
+    session[DF_GSI_FILENAME] = secure_filename(file.filename)
+    file_path = os.path.join(
+        current_app.config['UPLOAD_FOLDER'], session.get(DF_GSI_FILENAME))
+    file.save(file_path)
+
+    # Intentar procesar el archivo y capturar cualquier excepción
+    try:
+        df_gsi, error_de_cierre, distancia_total, error_km_posteriori, tolerancia = procesar_gsi(
+            file_path)
+        session[ERROR_DE_CIERRE] = error_de_cierre
+        session[DISTANCIA_TOTAL] = distancia_total
+        session[ERROR_KM_POSTERIORI] = error_km_posteriori
+        session[TOLERANCIA] = tolerancia
+        serializar_df_gsi(df_gsi)
+    except Exception as e:
+        return render_template('500_generic.html', e=e), 500
+
+    # Renderizar la página de inicio con los resultados
+    return render_template(
+        'home.html', tables=df_gsi,
+        error_de_cierre=error_de_cierre,
+        distancia_total=distancia_total,
+        error_km_posteriori=error_km_posteriori,
+        tolerancia=tolerancia
+    )
 
 
 @bp.route('/descargar-estadillos')
@@ -66,98 +101,169 @@ def descargar_estadillos():
 
 @bp.route('/procesar', methods=['POST'])
 def procesar():
+    # Manejar el rechazo de itinerarios
     if request.form.get('rechazar'):
-        itinerario_rechazado_str = request.form.get('rechazar')
-        itinerario_rechazado_int = int(itinerario_rechazado_str)
-        df_gsi = deserializar_df_gsi(session.get('df_gsi_path'))
-        df_gsi = [(itinerario[0], itinerario[1])
-                  for itinerario in df_gsi if itinerario[0] != itinerario_rechazado_int]
-        session['error_de_cierre'] = {int(k): v for k, v in session.get(
-            'error_de_cierre').items() if k != itinerario_rechazado_str}
-        session['distancia_total'] = {int(k): v for k, v in session.get(
-            'distancia_total').items() if k != itinerario_rechazado_str}
-        session['error_km_posteriori'] = {int(k): v for k, v in session.get(
-            'error_km_posteriori').items() if k != itinerario_rechazado_str}
-        session['tolerancia'] = {int(k): v for k, v in session.get(
-            'tolerancia').items() if k != itinerario_rechazado_str}
-        serializar_df_gsi(df_gsi)
-        return render_template('home.html', tables=df_gsi,
-                               error_de_cierre=session.get('error_de_cierre'),
-                               distancia_total=session.get('distancia_total'),
-                               error_km_posteriori=session.get(
-                                   'error_km_posteriori'),
-                               tolerancia=session.get('tolerancia'))
+        return handle_rechazar_gsi()
+
+    # Manejar la aceptación de itinerarios
     if request.form.get('aceptar') or request.form.get('fechaInput'):
-        if not request.form.get('fechaInput'):
-            session['itinerario_aceptado_str'] = request.form.get('aceptar')
-            session['itinerario_aceptado_int'] = int(
-                session.get('itinerario_aceptado_str'))
-            return render_template('procesar.html')
-        if request.form.get('fechaInput'):
-            df_gsi = deserializar_df_gsi(session.get('df_gsi_path'))
-            fecha = request.form.get('fechaInput')
-            itinerario_aceptado = session.get('itinerario_aceptado_str')
-            if itinerario_aceptado != 'todos':
-                df_gsi = [(itinerario[0], itinerario[1])
-                          for itinerario in df_gsi if itinerario[0] == session.get('itinerario_aceptado_int')]
-                csv_gsi, ids_inexistentes = obtener_csv_gsi(df_gsi, fecha)
-                serializar_csv_gsi(csv_gsi, itinerario_aceptado)
-                try:
-                    enviar_csv_ids_inex(ids_inexistentes, itinerario_aceptado)
-                except Exception as e:
-                    flash(
-                        'Ha ocurrido un error al enviar el CSV de ids inexistentes', category='error')
-                return render_template('procesar.html', csv_gsi=csv_gsi, ids_inexistentes=ids_inexistentes)
-            else:
-                csv_gsi_list = []
-                for itinerario in df_gsi:
-                    csv_gsi, ids_inexistentes = obtener_csv_gsi(
-                        itinerario, fecha)
-                    csv_gsi_list.append(
-                        (itinerario[0], csv_gsi, ids_inexistentes))
-                    serializar_csv_gsi_list(csv_gsi_list)
-                    try:
-                        enviar_csv_ids_inex(ids_inexistentes, itinerario[0])
-                    except Exception as e:
-                        flash(
-                            'Ha ocurrido un error al enviar el CSV de ids inexistentes', category='error')
-                return render_template('procesar.html', csv_gsi_list=csv_gsi_list)
+        return handle_aceptar_gsi()
+
+    # Manejar la aceptación de todos los itinerarios
     if request.form.get('aceptar-todos'):
-        session['itinerario_aceptado_str'] = 'todos'
-        session['itinerario_aceptado_int'] = 0
-        return render_template('procesar.html')
+        return handle_aceptar_todos_gsi()
+
+    # Redirigir a la página de inicio si se rechazan todos los itinerarios
     return redirect(url_for('importador.home'))
+
+
+def handle_rechazar_gsi():
+    """Maneja el rechazo de itinerarios."""
+    itinerario_rechazado_str = request.form.get('rechazar')
+    itinerario_rechazado_int = int(itinerario_rechazado_str)
+
+    # Eliminar el itinerario rechazado del dataframe
+    df_gsi = deserializar_df_gsi(session.get(DF_GSI_PATH))
+    df_gsi = [(itinerario[0], itinerario[1])
+              for itinerario in df_gsi if itinerario[0] != itinerario_rechazado_int]
+
+    # Actualizar las sesiones
+    update_session_without_itinerary(itinerario_rechazado_str)
+
+    # Serializar y renderizar
+    serializar_df_gsi(df_gsi)
+    return render_template('home.html', tables=df_gsi,
+                           error_de_cierre=session.get(ERROR_DE_CIERRE),
+                           distancia_total=session.get(DISTANCIA_TOTAL),
+                           error_km_posteriori=session.get(
+                               ERROR_KM_POSTERIORI),
+                           tolerancia=session.get(TOLERANCIA))
+
+
+def handle_aceptar_gsi():
+    """Maneja la aceptación de itinerarios."""
+    # Si no se ha ingresado una fecha, renderizar la página de procesamiento para solicitar la fecha
+    if not request.form.get('fechaInput'):
+        session[ITINERARIO_ACEPTADO_STR] = request.form.get('aceptar')
+        session[ITINERARIO_ACEPTADO_INT] = int(
+            session.get(ITINERARIO_ACEPTADO_STR))
+        return render_template('procesar.html')
+
+    # Si se ha ingresado una fecha, procesar el itinerario aceptado
+    return process_itinerary_with_date()
+
+
+def handle_aceptar_todos_gsi():
+    """Maneja la aceptación de todos los itinerarios."""
+    session[ITINERARIO_ACEPTADO_STR] = 'todos'
+    session[ITINERARIO_ACEPTADO_INT] = 0
+    return render_template('procesar.html')
+
+
+def update_session_without_itinerary(itinerario_rechazado_str):
+    """Actualiza las variables de sesión eliminando el itinerario rechazado."""
+    session[ERROR_DE_CIERRE] = {int(k): v for k, v in session.get(
+        ERROR_DE_CIERRE).items() if k != itinerario_rechazado_str}
+    session[DISTANCIA_TOTAL] = {int(k): v for k, v in session.get(
+        DISTANCIA_TOTAL).items() if k != itinerario_rechazado_str}
+    session[ERROR_KM_POSTERIORI] = {int(k): v for k, v in session.get(
+        ERROR_KM_POSTERIORI).items() if k != itinerario_rechazado_str}
+    session[TOLERANCIA] = {int(k): v for k, v in session.get(
+        TOLERANCIA).items() if k != itinerario_rechazado_str}
+
+
+def process_itinerary_with_date():
+    """Procesa el itinerario basado en la fecha proporcionada."""
+
+    df_gsi = deserializar_df_gsi(session.get(DF_GSI_PATH))
+    fecha = request.form.get('fechaInput')
+    itinerario_aceptado = session.get(ITINERARIO_ACEPTADO_STR)
+
+    # Si se ha aceptado un itinerario específico, procesarlo
+    if itinerario_aceptado != 'todos':
+        df_gsi = [(itinerario[0], itinerario[1])
+                  for itinerario in df_gsi if itinerario[0] == session.get(ITINERARIO_ACEPTADO_INT)]
+        csv_gsi, ids_inexistentes = obtener_csv_gsi(df_gsi, fecha)
+        serializar_csv_gsi(csv_gsi, itinerario_aceptado)
+
+        # Enviar el CSV de ids inexistentes por FTP
+        try:
+            enviar_csv_ids_inex(ids_inexistentes, itinerario_aceptado)
+        except Exception as e:
+            flash(
+                'Ha ocurrido un error al enviar el CSV de ids inexistentes', category='error')
+
+        # Renderizar la página de procesamiento con los resultados
+        return render_template('procesar.html', csv_gsi=csv_gsi, ids_inexistentes=ids_inexistentes)
+
+    # Si se han aceptado todos los itinerarios, procesarlos
+    else:
+        csv_gsi_list = []
+        for itinerario in df_gsi:
+            csv_gsi, ids_inexistentes = obtener_csv_gsi(
+                itinerario, fecha)
+            csv_gsi_list.append(
+                (itinerario[0], csv_gsi, ids_inexistentes))
+            serializar_csv_gsi_list(csv_gsi_list)
+
+            # Enviar el CSV de ids inexistentes por FTP
+            try:
+                enviar_csv_ids_inex(ids_inexistentes, itinerario[0])
+            except Exception as e:
+                flash(
+                    'Ha ocurrido un error al enviar el CSV de ids inexistentes', category='error')
+
+        # Renderizar la página de procesamiento con los resultados
+        return render_template('procesar.html', csv_gsi_list=csv_gsi_list)
 
 
 @bp.route('/enviar', methods=['POST'])
 def enviar():
+    # Si se acepta un itierario específico
     if request.form.get('aceptar'):
-        itinerario_aceptado = int(request.form.get('aceptar'))
-        csv_gsi = deserializar_csv_gsi(session.get('csv_gsi_path'))
-        csv_gsi = csv_gsi[['FECHA', 'NOM_SENSOR', 'Cota comp.']]
-        try:
-            enviar_csv(csv_gsi, itinerario_aceptado)
-        except Exception as e:
-            return render_template(
-                '500_generic.html',
-                e=e,
-                message='No se ha podido enviar el archivo. Vuelve a intentarlo o descarga el CSV e impórtalo manualmente'
-            )
-        return render_template('enviar.html', csv=csv_gsi)
+        return handle_enviar_csv()
 
+    # Si se aceptan todos los itinerarios
     if request.form.get('aceptar-todos'):
-        csv_gsi_list = deserializar_csv_gsi_list(
-            session.get('csv_gsi_list_path'))
-        print(csv_gsi_list)
-        csv_list = [(itinerario[0], itinerario[1][['FECHA', 'NOM_SENSOR', 'Cota comp.']])
-                    for itinerario in csv_gsi_list]
-        for csv in csv_list:
-            enviar_csv(csv[1], csv[0])
-        print(csv_list)
-        return render_template('enviar.html', csv_list=csv_list)
+        return handle_enviar_csv_list()
 
+    # Si se rechaza el reporte
     flash('El reporte rechazado no se ha importado', category='warning')
     return redirect(url_for('importador.home'))
+
+
+def handle_enviar_csv():
+    """Maneja la aceptación de un itinerario específico."""
+
+    itinerario_aceptado = int(request.form.get('aceptar'))
+    csv_gsi = deserializar_csv_gsi(session.get(CSV_GSI_PATH))
+    csv_gsi = csv_gsi[['FECHA', 'NOM_SENSOR', 'Cota comp.']]
+
+    # Enviar el CSV por FTP
+    try:
+        enviar_csv(csv_gsi, itinerario_aceptado)
+    except Exception as e:
+        return render_template(
+            '500_generic.html',
+            e=e,
+            message='No se ha podido enviar el archivo. Vuelve a intentarlo o descarga el CSV e impórtalo manualmente'
+        )
+
+    # Renderizar la página de envío con los resultados
+    return render_template('enviar.html', csv=csv_gsi)
+
+
+def handle_enviar_csv_list():
+    """Maneja la aceptación de todos los itinerarios."""
+
+    csv_gsi_list = deserializar_csv_gsi_list(session.get(CSV_GSI_LIST_PATH))
+    csv_list = [(itinerario[0], itinerario[1][['FECHA', 'NOM_SENSOR', 'Cota comp.']])
+                for itinerario in csv_gsi_list]
+    for csv in csv_list:
+        enviar_csv(csv[1], csv[0])
+
+    # Renderizar la página de envío con los resultados
+    return render_template('enviar.html', csv_list=csv_list)
 
 
 @bp.route('/descargar_csv')
