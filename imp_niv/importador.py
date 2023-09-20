@@ -1,3 +1,4 @@
+import glob
 import os
 from flask import (
     Blueprint, current_app, flash, redirect, render_template, request, session, url_for, send_file
@@ -178,7 +179,6 @@ def process_itinerary_with_date():
     df_gsi = deserializar_df_gsi(session.get(DF_GSI_PATH))
     fecha = request.form.get('fechaInput')
     itinerario_aceptado = session.get(ITINERARIO_ACEPTADO_STR)
-
     # Si se ha aceptado un itinerario específico, procesarlo
     if itinerario_aceptado != 'todos':
         df_gsi = [(itinerario[0], itinerario[1])
@@ -219,7 +219,7 @@ def process_itinerary_with_date():
 
 @bp.route('/enviar', methods=['POST'])
 def enviar():
-    # Si se acepta un itierario específico
+    # Si se acepta un itinerario específico
     if request.form.get('aceptar'):
         return handle_enviar_csv()
 
@@ -227,8 +227,12 @@ def enviar():
     if request.form.get('aceptar-todos'):
         return handle_enviar_csv_list()
 
-    # Si se rechaza el reporte
-    flash('El reporte rechazado no se ha importado', category='warning')
+    # Si se rechaza un reporte individual
+    if request.form.get('rechazar'):
+        return handle_rechazar_reporte()
+
+    # Si se rechazan todos los reportes
+    flash('Los reportes rechazados no se han importado', category='warning')
     return redirect(url_for('importador.home'))
 
 
@@ -250,6 +254,7 @@ def handle_enviar_csv():
         )
 
     # Renderizar la página de envío con los resultados
+    cleanup()
     return render_template('enviar.html', csv=csv_gsi)
 
 
@@ -263,10 +268,47 @@ def handle_enviar_csv_list():
         enviar_csv(csv[1], csv[0])
 
     # Renderizar la página de envío con los resultados
+    cleanup()
     return render_template('enviar.html', csv_list=csv_list)
+
+
+def handle_rechazar_reporte():
+    """Maneja el rechazo de un itinerario específico."""
+
+    itinerario_rechazado = int(request.form.get('rechazar'))
+
+    # Eliminar el itinerario rechazado de los dataframes
+    df_gsi = deserializar_df_gsi(session.get(DF_GSI_PATH))
+    df_gsi = [(itinerario[0], itinerario[1])
+              for itinerario in df_gsi if itinerario[0] != itinerario_rechazado]
+    csv_gsi_list = deserializar_csv_gsi_list(session.get(CSV_GSI_LIST_PATH))
+    csv_gsi_list = [(itinerario[0], itinerario[1], itinerario[2])
+                    for itinerario in csv_gsi_list if itinerario[0] != itinerario_rechazado]
+    if len(df_gsi) == 0:
+        flash('Los reportes rechazados no se han importado', category='warning')
+        return redirect(url_for('importador.home'))
+
+    # Actualizar las sesiones
+    update_session_without_itinerary(itinerario_rechazado)
+
+    # Serializar y renderizar
+    serializar_df_gsi(df_gsi)
+    serializar_csv_gsi_list(csv_gsi_list)
+    return render_template('procesar.html', csv_gsi_list=csv_gsi_list)
 
 
 @bp.route('/descargar_csv')
 def descargar_csv():
     filepath = session.get('csv_path')
     return send_file(filepath, as_attachment=True)
+
+
+def cleanup():
+    """Elimina todos los archivos temporales JSON que se han serializado durante esta sesión, y borra las variables de sesión."""
+
+    json_files = glob.glob(current_app.config['UPLOAD_FOLDER'] + '/*.json')
+    print(json_files)
+    for json_file in json_files:
+        os.remove(json_file)
+
+    session.clear()

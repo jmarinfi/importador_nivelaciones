@@ -22,7 +22,12 @@ def deserializar_df_gsi(path):
 def deserializar_csv_gsi_list(path):
     """Deserializa un archivo json con una lista de dataframes de pandas y lo devuelve como una lista de dataframes de pandas"""
 
-    return deserializar_df_gsi(path)
+    with open(path, 'r') as file:
+        lista_serializada = json.load(file)
+        csv_gsi = [(itinerario[0], pd.DataFrame(json.loads(itinerario[1])), pd.DataFrame(json.loads(itinerario[2])))
+                   for itinerario in lista_serializada]
+
+    return csv_gsi
 
 
 def deserializar_csv_gsi(path):
@@ -38,8 +43,10 @@ def serializar_df_gsi(df_gsi):
     lista_serializada = [(itinerario[0], itinerario[1].to_json())
                          for itinerario in df_gsi]
     lista_serializada_json = json.dumps(lista_serializada)
+    json_filename = re.sub(r'\.gsi', '.json', session.get(
+        'df_gsi_filename'), flags=re.IGNORECASE)
     lista_serializada_json_path = os.path.join(
-        current_app.config['UPLOAD_FOLDER'], 'processed_' + session.get('df_gsi_filename'))
+        current_app.config['UPLOAD_FOLDER'], 'processed_' + json_filename)
     session['df_gsi_path'] = lista_serializada_json_path
     with open(lista_serializada_json_path, 'w') as outfile:
         outfile.write(lista_serializada_json)
@@ -49,8 +56,10 @@ def serializar_csv_gsi(csv_gsi, itinerario):
     """Serializa un dataframe de pandas y lo devuelve como un archivo json"""
 
     df_serializado = csv_gsi.to_json()
+    json_filename = re.sub(r'\.gsi', '.json', session.get(
+        'df_gsi_filename'), flags=re.IGNORECASE)
     df_serializado_path = os.path.join(
-        current_app.config['UPLOAD_FOLDER'], f'csv_gsi_{itinerario}_' + session.get('df_gsi_filename'))
+        current_app.config['UPLOAD_FOLDER'], f'csv_gsi_{itinerario}_' + json_filename)
     session['csv_gsi_path'] = df_serializado_path
     with open(df_serializado_path, 'w') as outfile:
         outfile.write(df_serializado)
@@ -59,11 +68,13 @@ def serializar_csv_gsi(csv_gsi, itinerario):
 def serializar_csv_gsi_list(csv_gsi_list):
     """Serializa una lista de dataframes de pandas y lo devuelve como un archivo json"""
 
-    lista_serializada = [(itinerario[0], itinerario[1].to_json())
+    lista_serializada = [(itinerario[0], itinerario[1].to_json(), itinerario[2].to_json())
                          for itinerario in csv_gsi_list]
     lista_serializada_json = json.dumps(lista_serializada)
+    json_filename = re.sub(r'\.gsi', '.json', session.get(
+        'df_gsi_filename'), flags=re.IGNORECASE)
     lista_serializada_json_path = os.path.join(
-        current_app.config['UPLOAD_FOLDER'], 'csv_gsi_list_' + session.get('df_gsi_filename'))
+        current_app.config['UPLOAD_FOLDER'], 'csv_gsi_list_' + json_filename)
     session['csv_gsi_list_path'] = lista_serializada_json_path
     with open(lista_serializada_json_path, 'w') as outfile:
         outfile.write(lista_serializada_json)
