@@ -1,5 +1,6 @@
 import glob
 import os
+import re
 from flask import (
     Blueprint, current_app, flash, redirect, render_template, request, session, url_for, send_file
 )
@@ -299,16 +300,40 @@ def handle_rechazar_reporte():
 
 @bp.route('/descargar_csv')
 def descargar_csv():
-    filepath = session.get('csv_path')
-    return send_file(filepath, as_attachment=True)
+    """Descarga el CSV de un itinerario específico."""
+
+    # Viniendo de una lista de CSV, el itinerario estará en los argumentos de la solicitud,
+    # de lo contrario, estará en la sesión.
+    if request.args.get('itinerario'):
+        itinerario = request.args.get('itinerario')
+    else:
+        itinerario = session.get(ITINERARIO_ACEPTADO_STR)
+
+    # Construir la ruta del archivo CSV
+    filename = session.get('df_gsi_filename')
+    csv_filename = re.sub(r'\.gsi', '.csv',
+                          filename, flags=re.IGNORECASE)
+    csv_path = os.path.join(
+        current_app.config['UPLOAD_FOLDER'], f'csv_{itinerario}_' + csv_filename)
+
+    # Enviar el archivo CSV
+    return send_file(csv_path, as_attachment=True)
 
 
 def cleanup():
-    """Elimina todos los archivos temporales JSON que se han serializado durante esta sesión, y borra las variables de sesión."""
+    """Elimina todos los archivos temporales JSON, si existen, que se han serializado durante esta sesión, y borra las variables de sesión."""
 
-    json_files = glob.glob(current_app.config['UPLOAD_FOLDER'] + '/*.json')
-    print(json_files)
-    for json_file in json_files:
-        os.remove(json_file)
+    try:
+        os.remove(session.get(DF_GSI_PATH))
+    except:
+        pass
 
-    session.clear()
+    try:
+        os.remove(session.get(CSV_GSI_PATH))
+    except:
+        pass
+
+    try:
+        os.remove(session.get(CSV_GSI_LIST_PATH))
+    except:
+        pass

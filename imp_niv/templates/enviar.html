@@ -23,7 +23,7 @@
         <h3 class="container">El siguiente CSV se ha enviado a la base de datos:</h3>
         <div class="container">
             <div class="d-grid gap-2 p-4">
-              <a class="btn btn-lg btn-primary" href="{{ url_for('importador.descargar_csv') }}" role="button"
+              <a class="btn btn-lg btn-primary" href="{{ url_for('importador.descargar_csv', itinerario=csv[0]) }}" role="button"
                 download>Descarga CSV</a>
             </div>
           </div>

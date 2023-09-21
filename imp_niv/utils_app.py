@@ -97,7 +97,6 @@ def enviar_csv(df, itinerario):
                           filename, flags=re.IGNORECASE)
     csv_path = os.path.join(
         current_app.config['UPLOAD_FOLDER'], f'csv_{itinerario}_' + csv_filename)
-    session['csv_path'] = csv_path
     df.to_csv(csv_path, sep=';', header=False, index=False)
 
     local_file_path = csv_path
@@ -113,7 +112,6 @@ def enviar_csv_ids_inex(df, itinerario):
                           filename, flags=re.IGNORECASE)
     csv_path = os.path.join(
         current_app.config['UPLOAD_FOLDER'], f'csv_ids_inex_{itinerario}_' + csv_filename)
-    session['csv_path'] = csv_path
     df.to_csv(csv_path, sep=';', header=False, index=False)
 
     local_file_path = csv_path
