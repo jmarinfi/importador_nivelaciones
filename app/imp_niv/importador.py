@@ -1,12 +1,12 @@
-import glob
 import os
 import re
 from flask import (
-    Blueprint, current_app, flash, redirect, render_template, request, session, url_for, send_file
+    current_app, flash, redirect, render_template, request, session, url_for, send_file
 )
 from werkzeug.utils import secure_filename
-from imp_niv.utils_app import deserializar_csv_gsi, deserializar_csv_gsi_list, deserializar_df_gsi, enviar_csv, enviar_csv_ids_inex, obtener_csv_gsi, serializar_csv_gsi, serializar_csv_gsi_list, serializar_df_gsi
-from imp_niv.utils_gsi import procesar_gsi
+from .utils_app import deserializar_csv_gsi, deserializar_csv_gsi_list, deserializar_df_gsi, enviar_csv, enviar_csv_ids_inex, obtener_csv_gsi, serializar_csv_gsi, serializar_csv_gsi_list, serializar_df_gsi
+from .utils_gsi import procesar_gsi
+from . import imp_niv
 
 # Extensiones de archivo permitidas
 ALLOWED_EXTENSIONS = {'gsi', }
@@ -23,21 +23,19 @@ ITINERARIO_ACEPTADO_INT = 'itinerario_aceptado_int'
 CSV_GSI_PATH = 'csv_gsi_path'
 CSV_GSI_LIST_PATH = 'csv_gsi_list_path'
 
-bp = Blueprint('importador', __name__)
-
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-@bp.route('/', methods=('GET', 'POST'))
+@imp_niv.route('/', methods=('GET', 'POST'))
 def home():
     # Si la solicitud es POST, procesamos el archivo enviado
     if request.method == 'POST':
         return handle_post_request()
 
     # Si no es POST, simplemente renderizamos la página de inicio
-    return render_template('home.html')
+    return render_template('imp_niv/home.html')
 
 
 def handle_post_request():
@@ -83,11 +81,11 @@ def process_and_render(file):
         session[TOLERANCIA] = tolerancia
         serializar_df_gsi(df_gsi)
     except Exception as e:
-        return render_template('500_generic.html', e=e), 500
+        return render_template('imp_niv/500_generic.html', e=e), 500
 
     # Renderizar la página de inicio con los resultados
     return render_template(
-        'home.html', tables=df_gsi,
+        'imp_niv/home.html', tables=df_gsi,
         error_de_cierre=error_de_cierre,
         distancia_total=distancia_total,
         error_km_posteriori=error_km_posteriori,
@@ -95,13 +93,13 @@ def process_and_render(file):
     )
 
 
-@bp.route('/descargar-estadillos')
+@imp_niv.route('/descargar-estadillos')
 def descargar_estadillos():
     filepath = os.path.join('../files', 'Estadillos.xlsx')
     return send_file(filepath, as_attachment=True)
 
 
-@bp.route('/procesar', methods=['POST'])
+@imp_niv.route('/procesar', methods=['POST'])
 def procesar():
     # Manejar el rechazo de itinerarios
     if request.form.get('rechazar'):
@@ -134,7 +132,7 @@ def handle_rechazar_gsi():
 
     # Serializar y renderizar
     serializar_df_gsi(df_gsi)
-    return render_template('home.html', tables=df_gsi,
+    return render_template('imp_niv/home.html', tables=df_gsi,
                            error_de_cierre=session.get(ERROR_DE_CIERRE),
                            distancia_total=session.get(DISTANCIA_TOTAL),
                            error_km_posteriori=session.get(
@@ -149,7 +147,7 @@ def handle_aceptar_gsi():
         session[ITINERARIO_ACEPTADO_STR] = request.form.get('aceptar')
         session[ITINERARIO_ACEPTADO_INT] = int(
             session.get(ITINERARIO_ACEPTADO_STR))
-        return render_template('procesar.html')
+        return render_template('imp_niv/procesar.html')
 
     # Si se ha ingresado una fecha, procesar el itinerario aceptado
     return process_itinerary_with_date()
@@ -159,7 +157,7 @@ def handle_aceptar_todos_gsi():
     """Maneja la aceptación de todos los itinerarios."""
     session[ITINERARIO_ACEPTADO_STR] = 'todos'
     session[ITINERARIO_ACEPTADO_INT] = 0
-    return render_template('procesar.html')
+    return render_template('imp_niv/procesar.html')
 
 
 def update_session_without_itinerary(itinerario_rechazado_str):
@@ -195,7 +193,7 @@ def process_itinerary_with_date():
                 'Ha ocurrido un error al enviar el CSV de ids inexistentes', category='error')
 
         # Renderizar la página de procesamiento con los resultados
-        return render_template('procesar.html', csv_gsi=csv_gsi, ids_inexistentes=ids_inexistentes)
+        return render_template('imp_niv/procesar.html', csv_gsi=csv_gsi, ids_inexistentes=ids_inexistentes)
 
     # Si se han aceptado todos los itinerarios, procesarlos
     else:
@@ -215,10 +213,10 @@ def process_itinerary_with_date():
                     'Ha ocurrido un error al enviar el CSV de ids inexistentes', category='error')
 
         # Renderizar la página de procesamiento con los resultados
-        return render_template('procesar.html', csv_gsi_list=csv_gsi_list)
+        return render_template('imp_niv/procesar.html', csv_gsi_list=csv_gsi_list)
 
 
-@bp.route('/enviar', methods=['POST'])
+@imp_niv.route('/enviar', methods=['POST'])
 def enviar():
     # Si se acepta un itinerario específico
     if request.form.get('aceptar'):
@@ -249,14 +247,14 @@ def handle_enviar_csv():
         enviar_csv(csv_gsi, itinerario_aceptado)
     except Exception as e:
         return render_template(
-            '500_generic.html',
+            'imp_niv/500_generic.html',
             e=e,
             message='No se ha podido enviar el archivo. Vuelve a intentarlo o descarga el CSV e impórtalo manualmente'
         )
 
     # Renderizar la página de envío con los resultados
     cleanup()
-    return render_template('enviar.html', csv=csv_gsi)
+    return render_template('imp_niv/enviar.html', csv=csv_gsi)
 
 
 def handle_enviar_csv_list():
@@ -270,7 +268,7 @@ def handle_enviar_csv_list():
 
     # Renderizar la página de envío con los resultados
     cleanup()
-    return render_template('enviar.html', csv_list=csv_list)
+    return render_template('imp_niv/enviar.html', csv_list=csv_list)
 
 
 def handle_rechazar_reporte():
@@ -295,10 +293,10 @@ def handle_rechazar_reporte():
     # Serializar y renderizar
     serializar_df_gsi(df_gsi)
     serializar_csv_gsi_list(csv_gsi_list)
-    return render_template('procesar.html', csv_gsi_list=csv_gsi_list)
+    return render_template('imp_niv/procesar.html', csv_gsi_list=csv_gsi_list)
 
 
-@bp.route('/descargar_csv')
+@imp_niv.route('/descargar_csv')
 def descargar_csv():
     """Descarga el CSV de un itinerario específico."""
 

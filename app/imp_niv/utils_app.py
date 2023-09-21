@@ -6,7 +6,7 @@ import pandas as pd
 
 import json
 
-from imp_niv.utils_db import get_dict_id_externo_nom_sensor, get_lectura_inicial, get_tres_ultimas_lecturas, get_ultima_referencia
+from .utils_db import get_dict_id_externo_nom_sensor, get_lectura_inicial, get_tres_ultimas_lecturas, get_ultima_referencia
 
 
 def deserializar_df_gsi(path):

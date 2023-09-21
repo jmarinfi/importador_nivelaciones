@@ -36,8 +36,8 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    from . import importador
-    app.register_blueprint(importador.bp)
+    from .imp_niv import imp_niv as imp_niv_blueprint
+    app.register_blueprint(imp_niv_blueprint)
 
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_LIMA_URL')
     db.init_app(app)
