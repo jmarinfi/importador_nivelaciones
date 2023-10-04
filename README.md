@@ -23,6 +23,6 @@ Se deben configurar las siguientes variables de entorno:
 ```console
 SECRET_KEY="La clave secreta que se utilizará para firmar la cookie de la sesión y otras funciones de seguridad"
 SQLALCHEMY_DATABASE_URI="La URL de conexión a la base de datos de metrolima"
-FTP_MONC_SERV="Nombre de host del servidor FTP donde se envían los datos procesados"
-FTP_MONC_USER="Nombre de usuario del servidor FTP"
-FTP_MONC_PASSW="Contraseña de acceso al servidor FTP"```
+FTP_SERVER_TD="Nombre de host del servidor FTP donde se envían los datos procesados"
+FTP_USER_TD="Nombre de usuario del servidor FTP"
+FTP_PASS_TD="Contraseña de acceso al servidor FTP"```

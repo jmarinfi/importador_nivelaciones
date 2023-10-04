@@ -33,4 +33,8 @@ def create_app(test_config=None):
     # Inicializa la base de datos
     db.init_app(app)
 
+    # Inicializa la limpieza de archivos temporales
+    from app.imp_niv.utils_app import init_cleanup
+    init_cleanup(app)
+
     return app

@@ -83,7 +83,7 @@ def serializar_csv_gsi_list(csv_gsi_list):
 def enviar_por_ftp(local_file_path, remote_file_name):
     """Envía un archivo por ftp a un servidor"""
 
-    with FTP(host=os.getenv('FTP_MONC_SERV'), user=os.getenv('FTP_MONC_USER'), passwd=os.getenv('FTP_MONC_PASSW')) as ftp:
+    with FTP(host=current_app.config['FTP_SERVER_TD'], user=current_app.config['FTP_USER_TD'], passwd=current_app.config['FTP_PASS_TD']) as ftp:
         with open(local_file_path, 'rb') as text_file:
             ftp.cwd('/LIMA/Linea_2')
             ftp.storlines('STOR ' + remote_file_name, text_file)
@@ -198,3 +198,16 @@ def obtener_csv_gsi(df_gsi, fecha):
             float) - df_ids_existentes['LECTURA_REF'].astype(float)) * 1000 + df_ids_existentes['MEDIDA_REF'].astype(float))
 
     return df_ids_existentes, df_ids_inexistentes
+
+
+def init_cleanup(app):
+    """Elimina todos los archivos temporales JSON, si existen, que se hayan serializado en alguna sesión anterior."""
+    files = os.listdir(app.config['UPLOAD_FOLDER'])
+
+    for file in files:
+        if file.endswith('.json'):
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], file)
+            try:
+                os.remove(file_path)
+            except:
+                pass
