@@ -205,9 +205,10 @@ def init_cleanup(app):
     files = os.listdir(app.config['UPLOAD_FOLDER'])
 
     for file in files:
-        if file.endswith('.json'):
+        if file.endswith('.json') or file.endswith('.csv') or file.endswith('.GSI') or file.endswith('.gsi'):
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], file)
             try:
                 os.remove(file_path)
             except:
                 pass
+

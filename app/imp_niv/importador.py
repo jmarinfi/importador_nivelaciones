@@ -80,6 +80,9 @@ def process_and_render(file):
         session[ERROR_KM_POSTERIORI] = error_km_posteriori
         session[TOLERANCIA] = tolerancia
         serializar_df_gsi(df_gsi)
+
+        # Borrar el archivo subido
+        os.remove(file_path)
     except Exception as e:
         return render_template('imp_niv/500_generic.html', e=e), 500
 
