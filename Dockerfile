@@ -1,6 +1,20 @@
 # Utiliza una imagen base de Python 3.11
 FROM python:3.11
 
+# Declara variables de entorno como argumentos
+ARG SECRET_KEY
+ARG DATABASE_LIMA_URL
+ARG FTP_SERVER_TD
+ARG FTP_USER_TD
+ARG FTP_PASS_TD
+
+# Establece las variables de entorno
+ENV SECRET_KEY=$SECRET_KEY
+ENV DATABASE_LIMA_URL=$DATABASE_LIMA_URL
+ENV FTP_SERVER_TD=$FTP_SERVER_TD
+ENV FTP_USER_TD=$FTP_USER_TD
+ENV FTP_PASS_TD=$FTP_PASS_TD
+
 # Establece el directorio de trabajo en /app
 WORKDIR /app
 
