@@ -2,79 +2,18 @@
 
 {% block content %}
 
-{% if csv_gsi is not defined and csv_gsi_list is not defined %}
+<script>
+    var data = {{ data|safe }};
+</script>
 
-<div class="container">
-    <form action="{{ url_for('importador.procesar') }}" method="post">
-        <fieldset>
-            <div class="form-group">
-                <label for="fechaInput" class="form-label mt-4">Fecha y hora de la lectura</label>
-                <input type="datetime-local" name="fechaInput" value="fecha-lectura" id="fechaInput" class="form-control" placeholder="Fecha y hora" step="1" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Enviar</button>
-        </fieldset>
-    </form>
-</div>
+<div class="container" id="reporte"></div>
 
-{% else %}
+<div id="accept-reject-all"></div>
 
-    {% if csv_gsi_list is not defined %}
-    <h3 class="container">Itinerario {{session.get('itinerario_aceptado_str')}}</h3>
-    <div class="container">
-        <h4 class="container">Reporte:</h4>
-        <div class="container d-flex justify-content-end">
-            <form action="{{ url_for('importador.enviar') }}" method="post">
-              <fieldset>
-                <button type="submit" class="btn btn-primary m-4" id="aceptar" name="aceptar" value="{{session.get('itinerario_aceptado_str')}}">Aceptar</button>
-                <button type="submit" class="btn btn-primary m-4" id="rechazar-uno" name="rechazar-uno" value="{{session.get('itinerario_aceptado_str')}}">Rechazar</button>
-              </fieldset>
-            </form>
-        </div>
-        <div class="container table-responsive">
-            {{ csv_gsi.to_html(classes="table table-hover table-dark w-auto", header=True, index=False, justify="left") | safe }}
-        </div>
-        {% if not ids_inexistentes.empty %}
-        <h4 class="container">Los siguientes ID no existen en la base de datos:</h4>
-        <div class="container table-responsive">
-            {{ ids_inexistentes.to_html(classes="table table-hover table-dark", header=True, index=False, justify="left") | safe }}
-        </div>
-        {% endif %}
-    </div>
+<form id="hidden-form-procesar" action="{{ url_for('imp_niv.enviar') }}" method="post" style="display: none;">
+  <input type="text" id="hidden-input-procesar">
+</form>
 
-    {% else %}
-        {% for itinerario in csv_gsi_list %}
-        <h3 class="container">Itinerario {{ itinerario[0] }}</h3>
-        <div class="container">
-            <h4 class="container">Reporte:</h4>
-            <div class="container d-flex justify-content-end">
-                <form action="{{ url_for('importador.enviar') }}" method="post">
-                  <fieldset>
-                    <button type="submit" class="btn btn-primary m-4" id="aceptar" name="aceptar" value="{{ itinerario[0] }}">Aceptar</button>
-                    <button type="submit" class="btn btn-primary m-4" id="rechazar" name="rechazar" value="{{ itinerario[0] }}">Rechazar</button>
-                  </fieldset>
-                </form>
-            </div>
-            <div class="container table-responsive">
-                {{ itinerario[1].to_html(classes="table table-hover table-dark w-auto", header=True, index=False, justify="left") | safe }}
-            </div>
-            {% if not itinerario[2].empty %}
-            <h4 class="container">Los siguientes ID no existen en la base de datos:</h4>
-            <div class="container table-responsive">
-                {{ itinerario[2].to_html(classes="table table-hover table-dark", header=True, index=False, justify="left") | safe }}
-            </div>
-            {% endif %}
-        </div>
-        {% endfor %}
-        <div class="container d-flex justify-content-end">
-            <form action="{{ url_for('importador.enviar') }}" method="post">
-              <fieldset>
-                <button type="submit" class="btn btn-primary m-4" id="aceptar-todos" name="aceptar-todos" value="todos">Aceptar todos</button>
-                <button type="submit" class="btn btn-primary m-4" id="rechazar-todos" name="rechazar-todos" value="todos">Rechazar todos</button>
-              </fieldset>
-            </form>
-        </div>
-    {% endif %}
-
-{% endif %}
+<script src="{{ url_for('static', filename='js/procesar.js') }}"></script>
 
 {% endblock %}

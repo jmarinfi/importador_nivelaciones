@@ -1,6 +1,8 @@
 from ftplib import FTP
+from io import BytesIO
 import json
 import os
+from flask import Flask
 import pandas as pd
 
 from app.imp_niv.utils_db import get_dict_id_externo_nom_sensor, get_lectura_inicial, get_tres_ultimas_lecturas, get_ultima_referencia
@@ -19,42 +21,14 @@ def serializar_lista_dataframes(lista_dataframes: list) -> str:
     return json.dumps(lista_serializada)
 
 
-def guardar_serializacion_json(serializacion: str, path: str) -> None:
-    """Guarda una serialización en formato json en un archivo"""
 
-    with open(path, 'w') as outfile:
-        outfile.write(serializacion)
-
-
-def cargar_serializacion_json(path: str) -> str:
-    """Carga una serialización en formato json desde un archivo"""
-
-    with open(path, 'r') as file:
-        return file.read()
-    
-def deserializar_dataframe(serializacion: str) -> pd.DataFrame:
-    """Deserializa un archivo json con un dataframe de pandas y lo devuelve como un dataframe de pandas"""
-
-    return pd.DataFrame(json.loads(serializacion))
-
-def deserialize_lista_dataframes(serializacion: str) -> list:
-    """Deserializa un archivo json con una lista de dataframes de pandas y lo devuelve como una lista de dataframes de pandas"""
-
-    return [(itinerario[0], deserializar_dataframe(itinerario[1])) for itinerario in json.loads(serializacion)]
-
-
-def enviar_ftp(local_path: str, remote_path: str, host: str, user: str, password: str) -> None:
-    """Envía un archivo a un servidor ftp"""
+def enviar_ftp(csv: str, remote_path: str, host: str, user: str, password: str) -> None:
+    """Envía un csv a un servidor ftp"""
 
     with FTP(host=host, user=user, passwd=password) as ftp:
-        with open(local_path, 'rb') as file:
-            ftp.storbinary(f'STOR {remote_path}', file)
-
-
-def get_path(relative_path: str, filename: str) -> str:
-    """Devuelve la ruta absoluta de un archivo"""
-
-    return os.path.join(os.path.abspath(relative_path), filename)
+        csv_bytes = BytesIO(csv.encode('utf-8'))
+        ftp.cwd('/LIMA/Linea_2')
+        ftp.storbinary(f'STOR {remote_path}', csv_bytes)
 
 
 def get_reporte_from_df(df: pd.DataFrame, fecha: str) -> pd.DataFrame:
@@ -142,9 +116,3 @@ def get_reporte_from_df(df: pd.DataFrame, fecha: str) -> pd.DataFrame:
             float) - df_ids_existentes['LECTURA_REF'].astype(float)) * 1000 + df_ids_existentes['MEDIDA_REF'].astype(float))
         
     return df_ids_existentes, df_ids_inexistentes
-
-
-def get_reporte_from_df_list(df_list: list, fecha: str) -> list:
-    """Devuelve una lista de dataframes con los reportes de una lista de itinerarios"""
-
-    return [(itinerario[0], get_reporte_from_df(itinerario[1], fecha)) for itinerario in df_list]

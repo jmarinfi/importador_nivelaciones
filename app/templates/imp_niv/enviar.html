@@ -2,36 +2,12 @@
 
 {% block content %}
 
-{% if csv is defined %}
-<div class="container">
-    <h3 class="container">El siguiente CSV se ha enviado a la base de datos:</h3>
-    <div class="container">
-        <div class="d-grid gap-2 p-4">
-          <a class="btn btn-lg btn-primary" href="{{ url_for('importador.descargar_csv') }}" role="button"
-            download>Descarga CSV</a>
-        </div>
-      </div>
-    <div class="container table-responsive">
-        {{ csv.to_html(classes="table table-hover table-dark w-auto", header=True, index=False, justify="left") | safe }}
-    </div>
-</div>
-{% endif %}
+<script>
+    var data = {{ data|safe }};
+</script>
 
-{% if csv_list is defined %}
-    {% for csv in csv_list %}
-    <div class="container">
-        <h3 class="container">El siguiente CSV se ha enviado a la base de datos:</h3>
-        <div class="container">
-            <div class="d-grid gap-2 p-4">
-              <a class="btn btn-lg btn-primary" href="{{ url_for('importador.descargar_csv', itinerario=csv[0]) }}" role="button"
-                download>Descarga CSV</a>
-            </div>
-          </div>
-        <div class="container table-responsive">
-            {{ csv[1].to_html(classes="table table-hover table-dark w-auto", header=True, index=False, justify="left") | safe }}
-        </div>
-    </div>
-    {% endfor %}
-{% endif %}
+<div class="container" id="csv"></div>
+
+<script src="{{ url_for('static', filename='js/enviar.js') }}"></script>
 
 {% endblock %}

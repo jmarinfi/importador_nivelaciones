@@ -16,9 +16,9 @@ def get_tres_ultimas_lecturas(nom_sensor_list):
             "SELECT S.NOM_SENSOR AS SENSOR, (SELECT MAX(HH.FECHA_MEDIDA) FROM HISTORICO HH WHERE HH.ID_SENSOR=H.ID_SENSOR AND HH.FECHA_MEDIDA=(SELECT MAX(H.FECHA_MEDIDA) FROM HISTORICO H WHERE HH.ID_SENSOR=H.ID_SENSOR AND H.ID_ESTADO_DATO=0 AND H.ID_FLAG<>'F') AND HH.ID_ESTADO_DATO=0 AND HH.ID_FLAG<>'F') AS ULTIMA_FECHA_MEDIDA, (SELECT HH.LECTURA FROM HISTORICO HH WHERE HH.ID_SENSOR=H.ID_SENSOR AND HH.FECHA_MEDIDA=(SELECT MAX(HH.FECHA_MEDIDA) FROM HISTORICO HH WHERE HH.ID_SENSOR=H.ID_SENSOR AND HH.FECHA_MEDIDA=(SELECT MAX(H.FECHA_MEDIDA) FROM HISTORICO H WHERE HH.ID_SENSOR=H.ID_SENSOR AND H.ID_ESTADO_DATO=0 AND H.ID_FLAG<>'F') AND HH.ID_ESTADO_DATO=0 AND ID_FLAG<>'F')) AS ULTIMA_LECTURA, (SELECT MAX(HANT.FECHA_MEDIDA) FROM HISTORICO HANT WHERE HANT.ID_SENSOR=H.ID_SENSOR AND HANT.FECHA_MEDIDA<(SELECT MAX(HH.FECHA_MEDIDA) FROM HISTORICO HH WHERE HH.ID_SENSOR=H.ID_SENSOR AND HH.FECHA_MEDIDA=(SELECT MAX(H.FECHA_MEDIDA) FROM HISTORICO H WHERE HH.ID_SENSOR=H.ID_SENSOR AND H.ID_ESTADO_DATO=0 AND H.ID_FLAG<>'F') AND HH.ID_ESTADO_DATO=0 AND HH.ID_FLAG<>'F') AND HANT.ID_ESTADO_DATO=0 AND HANT.ID_FLAG<>'F') AS PENULTIMA_FECHA_MEDIDA, (SELECT HANT.LECTURA FROM HISTORICO HANT WHERE HANT.ID_SENSOR=H.ID_SENSOR AND HANT.FECHA_MEDIDA=(SELECT MAX(HANT.FECHA_MEDIDA) FROM HISTORICO HANT WHERE HANT.ID_SENSOR=H.ID_SENSOR AND HANT.FECHA_MEDIDA<(SELECT MAX(HH.FECHA_MEDIDA) FROM HISTORICO HH WHERE HH.ID_SENSOR=H.ID_SENSOR AND HH.FECHA_MEDIDA=(SELECT MAX(H.FECHA_MEDIDA) FROM HISTORICO H WHERE HH.ID_SENSOR=H.ID_SENSOR AND H.ID_ESTADO_DATO=0 AND H.ID_FLAG<>'F') AND HH.ID_ESTADO_DATO=0 AND ID_FLAG<>'F') AND HANT.ID_ESTADO_DATO=0 AND HANT.ID_FLAG<>'F')) AS PENULTIMA_LECTURA, (SELECT MAX(PENULT.FECHA_MEDIDA) FROM HISTORICO PENULT WHERE PENULT.ID_SENSOR=H.ID_SENSOR AND PENULT.FECHA_MEDIDA<(SELECT MAX(HANT.FECHA_MEDIDA) FROM HISTORICO HANT WHERE HANT.ID_SENSOR=H.ID_SENSOR AND HANT.FECHA_MEDIDA<(SELECT MAX(HH.FECHA_MEDIDA) FROM HISTORICO HH WHERE HH.ID_SENSOR=H.ID_SENSOR AND HH.FECHA_MEDIDA=(SELECT MAX(H.FECHA_MEDIDA) FROM HISTORICO H WHERE HH.ID_SENSOR=H.ID_SENSOR AND H.ID_ESTADO_DATO=0 AND H.ID_FLAG<>'F') AND HH.ID_ESTADO_DATO=0 AND ID_FLAG<>'F')AND HANT.ID_ESTADO_DATO=0 AND HANT.ID_FLAG<>'F')) AS ANTEPENULTIMA_FECHA_MEDIDA, (SELECT PENULT.LECTURA FROM HISTORICO PENULT WHERE PENULT.ID_SENSOR=H.ID_SENSOR AND PENULT.FECHA_MEDIDA=(SELECT MAX(PENULT.FECHA_MEDIDA) FROM HISTORICO PENULT WHERE PENULT.ID_SENSOR=H.ID_SENSOR AND PENULT.FECHA_MEDIDA<(SELECT MAX(HANT.FECHA_MEDIDA) FROM HISTORICO HANT WHERE HANT.ID_SENSOR=H.ID_SENSOR AND HANT.FECHA_MEDIDA<(SELECT MAX(HH.FECHA_MEDIDA) FROM HISTORICO HH WHERE HH.ID_SENSOR=H.ID_SENSOR AND HH.FECHA_MEDIDA=(SELECT MAX(H.FECHA_MEDIDA) FROM HISTORICO H WHERE HH.ID_SENSOR=H.ID_SENSOR AND H.ID_ESTADO_DATO=0 AND H.ID_FLAG<>'F') AND HH.ID_ESTADO_DATO=0 AND ID_FLAG<>'F') AND HANT.ID_ESTADO_DATO=0 AND HANT.ID_FLAG<>'F')AND PENULT.ID_ESTADO_DATO=0 AND PENULT.ID_FLAG<>'F')) AS ANTEPENTULTIMA_LECTURA FROM SENSOR S INNER JOIN HISTORICO H ON S.ID_SENSOR=H.ID_SENSOR WHERE S.NOM_SENSOR IN :id_ext_list GROUP BY SENSOR;"
         ), {'id_ext_list': nom_sensor_list}
     ).fetchall()
-    dict_ultimas_lecturas = {item[0]: item[2] for item in result}
-    dict_penultimas_lecturas = {item[0]: item[4] for item in result}
-    dict_antepenultimas_lecturas = {item[0]: item[6] for item in result}
+    dict_ultimas_lecturas = {item[0]: float(item[2]) if item[2] is not None else None for item in result}
+    dict_penultimas_lecturas = {item[0]: float(item[4]) if item[4] is not None else None for item in result}
+    dict_antepenultimas_lecturas = {item[0]: float(item[6]) if item[6] is not None else None for item in result}
     return dict_ultimas_lecturas, dict_penultimas_lecturas, dict_antepenultimas_lecturas
 
 
@@ -29,8 +29,8 @@ def get_ultima_referencia(nom_sensor_list):
         ), {'nom_sensor_list': nom_sensor_list}
     ).fetchall()
     dict_fecha_ultima_referencia = {item[0]: item[1] for item in result}
-    dict_lectura_ultima_referencia = {item[0]: item[2] for item in result}
-    dict_medida_ultima_referencia = {item[0]: item[3] for item in result}
+    dict_lectura_ultima_referencia = {item[0]: float(item[2]) if item[2] is not None else None for item in result}
+    dict_medida_ultima_referencia = {item[0]: float(item[3]) if item[3] is not None else None for item in result}
     return dict_fecha_ultima_referencia, dict_lectura_ultima_referencia, dict_medida_ultima_referencia
 
 
@@ -41,6 +41,6 @@ def get_lectura_inicial(nom_sensor_list):
         ), {'nom_sensor_list': nom_sensor_list}
     ).fetchall()
     dict_fecha_inicial = {item[0]: item[1] for item in result}
-    dict_lectura_inicial = {item[0]: item[2] for item in result}
-    dict_medida_inicial = {item[0]: item[3] for item in result}
+    dict_lectura_inicial = {item[0]: float(item[2]) if item[2] is not None else None for item in result}
+    dict_medida_inicial = {item[0]: float(item[3]) if item[3] is not None else None for item in result}
     return dict_fecha_inicial, dict_lectura_inicial, dict_medida_inicial
