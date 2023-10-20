@@ -216,10 +216,21 @@ function addEventButtonAccept(idButton, formElement, event, inputElement, nameEl
             // Enviar los datos por formulario oculto
             inputElement.name = nameElement;
             inputElement.value = JSON.stringify(dataToSend);
-            formElement.submit();
 
+            const acceptRejectAllDiv = document.getElementById('accept-reject-all');
+            acceptRejectAllDiv.remove();
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'none';
+            dateTimeForm.style.display= 'none';
+            const formGsiDiv = document.getElementById('form-gsi');
+            formGsiDiv.remove();
+            const dEstadilloDiv = document.getElementById('d-estadillo');
+            dEstadilloDiv.remove();
+            const progressBarElement = document.getElementById('progress-bar');
+            progressBarElement.classList.remove('d-none');
+
+            formElement.submit();
             // Borrar el formulario
-            document.body.removeChild(dateTimeForm);
         });
     });
 }

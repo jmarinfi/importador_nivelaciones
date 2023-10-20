@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (data.length > 1) {
         // Crear botones para aceptar o rechazar todas las tablas
-        const buttonsDiv = document.getElementById('accept-reject-all');
+        const buttonsDiv = document.getElementById('accept-reject-all-procesar');
         buttonsDiv.classList.add('btn-group', 'd-flex', 'justify-content-end');
         createButtons(buttonsDiv, 'Aceptar todos', 'Rechazar todos', 'accept-all-button', 'reject-all-button');
         const hiddenForm = document.getElementById('hidden-form-procesar');
@@ -118,6 +118,12 @@ function addEventButtonAccept(idButton, formElement, event, inputElement, nameEl
             'data': dataTable
         };
         inputElement.value = JSON.stringify(dataToSend);
+        const reporteDiv = document.getElementById('reporte');
+        reporteDiv.style.display = 'none';
+        const acceptRejectAllDiv = document.getElementById('accept-reject-all-procesar');
+        acceptRejectAllDiv.remove();
+        const progressBarDiv = document.getElementById('progress-bar-procesar');
+        progressBarDiv.classList.remove('d-none');
         formElement.submit();
     });
 }
