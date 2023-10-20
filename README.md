@@ -31,5 +31,5 @@ FTP_PASS_TD="Contraseña de acceso al servidor FTP"
 Para montar la imagen del Dockerfile, estableciendo las variables de entorno configuradas en la máquina:
 
 ```console
-docker build --build-arg SECRET_KEY=$SECRET_KEY --build-arg DATABASE_LIMA_URL=$DATABASE_LIMA_URL --build-arg FTP_SERVER_TD=$FTP_SERVER_TD --build-arg FTP_USER_TD=$FTP_USER_TD --build-arg FTP_PASS_TD=$FTP_PASS_TD https://github.com/jmarinfi/importador_nivelaciones.git
+docker build --build-arg SECRET_KEY=$SECRET_KEY --build-arg DATABASE_LIMA_URL=$DATABASE_LIMA_URL --build-arg FTP_SERVER_TD=$FTP_SERVER_TD --build-arg FTP_USER_TD=$FTP_USER_TD --build-arg FTP_PASS_TD=$FTP_PASS_TD https://github.com/jmarinfi/importador_nivelaciones.git#main
 ```
