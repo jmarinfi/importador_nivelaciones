@@ -28,12 +28,34 @@ def home():
         gsi_path = save_file(file, current_app.config['UPLOAD_FOLDER'])
         try:
             # Procesa el archivo GSI y guarda los parámetros en la sesión
-            df_gsi, error_de_cierre, distancia_total, error_km_posteriori, tolerancia = procesar_gsi(gsi_path)
+            result = procesar_gsi(gsi_path)
+            if result is None:
+                os.remove(gsi_path)
+                gsi_path = save_file(file, current_app.config['CUARENTENA_FOLDER'])
+                return render_template('imp_niv/cuarentena.html', msg="Se ha enviado el archivo a cuarentena por haberse detectado líneas borradas.\nContacta con tu superior.")
+            
+            df_gsi, error_de_cierre, distancia_total, error_km_posteriori, tolerancia = result
+            no_cierra = False
+            itinerario = ''
+            for i in error_de_cierre:
+                if abs(error_de_cierre.get(i)) > abs(tolerancia.get(i)):
+                    no_cierra = True
+                    itinerario = i
+                    break
+            if no_cierra:
+                os.remove(gsi_path)
+                gsi_path = save_file(file, current_app.config['CUARENTENA_FOLDER'])
+                return render_template(
+                    'imp_niv/cuarentena.html', 
+                    msg="Se ha enviado el archivo a cuarentena por no haber cerrado dentro de la tolerancia.\nContacta con tu superior.", 
+                    itinerario=itinerario)
+
             add_to_session(session, {
                 'ERROR_DE_CIERRE': error_de_cierre,
                 'DISTANCIA_TOTAL': distancia_total,
                 'ERROR_KM_POSTERIORI': error_km_posteriori,
-                'TOLERANCIA': tolerancia
+                'TOLERANCIA': tolerancia, 
+                'GSI_PATH': gsi_path
             })
             os.remove(gsi_path)
 
@@ -141,3 +163,7 @@ def enviar():
 
     return render_template('imp_niv/enviar.html', data=data)
 
+
+@imp_niv_bp.route('/cuarentena', methods=['GET'])
+def cuarentena():
+    return "Cuarentena"

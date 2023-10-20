@@ -235,6 +235,7 @@ def procesar_gsi(file):
     lineas_borradas = busca_lineas_borradas_gsi(file)
     if len(lineas_borradas) > 0:
         flash("Se han detectado líneas borradas: " + str(lineas_borradas))
+        return None
     df_gsi = ordena_df_gsi(df_gsi)
     df_gsi = separa_en_columnas(df_gsi)
     error_de_cierre = get_error_cierre_niv(df_gsi)

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{% if msg %}
+
+<div class="container" id="msg-to-cuarentena">
+    <div class="alert alert-dismissible alert-warning">
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <h4 class="alert-heading">Enviado a Cuarentena</h4>
+    <p class="mb-0">{{ msg }}</p>
+    <a href="{{ url_for('imp_niv.cuarentena') }}" class="alert-link">Cuarentena</a>
+</div>
+</div>
+
+{% endif %}
+
+{% if itinerario %}
+
+<p>Itinerario que no ha cerrado: {{ itinerario }}</p>
+
+{% endif %}
+
+{% endblock %}
