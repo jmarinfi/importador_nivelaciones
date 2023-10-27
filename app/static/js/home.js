@@ -1,73 +1,379 @@
-// Evento que se ejecuta cuando el documento HTML está completamente cargado
-document.addEventListener('DOMContentLoaded', () => {
-    buildTables(tables);
+
+// Componentes principales
+const estadilloDiv = document.getElementById('estadillo-div');
+const formGsiDiv = document.getElementById('form-gsi-div');
+const resultGsiDiv = document.getElementById('result-gsi');
+const resultGsiTablesDiv = document.getElementById('tables-gsi');
+const buttonsGsiDiv = document.getElementById('accept-reject-all-gsi');
+const resultReportDiv = document.getElementById('result-report');
+const resultReportTablesDiv = document.getElementById('tables-report');
+const buttonsReportDiv = document.getElementById('accept-reject-all-report');
+const resultCsvDiv = document.getElementById('result-csv');
+const progressBarDiv = document.getElementById('progress-bar');
+
+// Elementos accionables
+const submitGsiButton = document.getElementById('submit-gsi');
+
+// Elementos de formulario
+const formGsi = document.getElementById('form-gsi');
+
+// Urls de los endpoints
+urlHome;
+
+// Función para enviar el archivo GSI al servidor y recibir el objeto Gsi
+submitGsiButton.addEventListener('click', async (event) => {
+    event.preventDefault();
+    const formData = new FormData(formGsi);
+    const file = formData.get('formFile');
+
+    if (file.size === 0) {
+        console.log('No se ha seleccionado ningún archivo');
+        return;
+    }
+
+    const date = formData.get('dateInput');
+    const time = formData.get('timeInput');
+
+    const reader = new FileReader();
+    reader.readAsText(file, 'UTF-8');
+    reader.onload = async (evt) => {
+        const rawContent = evt.target.result;
+        const regexWord = /([0-9]{2}[0-9.])([0-9.]{3})([+\-])([^\s]{8,16})\s/g;
+        const matches = rawContent.matchAll(regexWord);
+
+        let itinerario = 0;
+        let metodo = null;
+        let distAcum = 0.0;
+        let lineaActual = null;
+        let itinerarioActual = null;
+        const itinerariosGsi = [];
+
+        for (const match of matches) {
+            let [_, wordIndex, infCompl, sign, data] = match;
+            wordIndex = wordIndex.replace(/\./g, '');
+            infCompl = infCompl.replace(/\./g, '');
+            data = data.replace(/\?|\./g, '');
+
+            if (wordIndex === '410') {
+                itinerario += 1;
+                distAcum = 0.0;
+                metodo = data === '1' ? 'EF' : data === '2' ? 'EFFE' : data === '3' ? 'aEF' : data === '4' ? 'aEFFE' : data === '10' ? 'Comprob_y_ajuste' : NaN;
+                itinerarioActual = {
+                    'itinerario': itinerario,
+                    'fecha': `${date} ${time}`,
+                    'error_de_cierre': 0.0,
+                    'tolerancia': 0.0,
+                    'error_km': 0.0,
+                    'distancia_total': 0.0,
+                    'lineas_gsi': [],
+                }
+                itinerariosGsi.push(itinerarioActual);
+                continue;
+            }
+
+            if (wordIndex === '110') {
+                if (lineaActual && !lineaActual.radiado && lineaActual.dist_mira) {
+                    distAcum += lineaActual.dist_mira;
+                    lineaActual.dist_acum = distAcum;
+                }
+                
+                lineaActual = {
+                    'num_linea': parseInt(infCompl),
+                    'metodo': metodo,
+                    'itinerario': itinerario,
+                    'nom_campo': data.replace(/^0+/, '') || '0',
+                    'dist_acum': parseFloat(distAcum),
+                };
+                itinerarioActual.lineas_gsi.push(lineaActual);
+                continue;
+            }
+
+            if (wordIndex === '32') {
+                lineaActual['dist_mira'] = (parseFloat(data) / 100000) * parseInt(sign + '1');
+                continue;
+            }
+
+            if (wordIndex === '83') {
+                lineaActual['cota'] = (parseFloat(data) / 100000) * parseInt(sign + '1');
+                continue;
+            }
+
+            if (wordIndex === '331') {
+                lineaActual['espalda'] = (parseFloat(data) / 100000) * parseInt(sign + '1');
+                continue;
+            }
+
+            if (wordIndex === '332') {
+                lineaActual['frente'] = (parseFloat(data) / 100000) * parseInt(sign + '1');
+            }
+
+            if (wordIndex === '333') {
+                lineaActual['radiado'] = (parseFloat(data) / 100000) * parseInt(sign + '1');
+                continue;
+            }
+
+            if (wordIndex === '390') {
+                lineaActual['med_rep'] = parseInt(data) * parseInt(sign + '1');
+                continue;
+            }
+
+            if (wordIndex === '391') {
+                lineaActual['desv_est'] = parseInt(data) * parseInt(sign + '1');
+                continue;
+            }
+
+            if (wordIndex === '392') {
+                lineaActual['mediana'] = parseInt(data) * parseInt(sign + '1');
+                continue;
+            }
+
+            if (wordIndex === '573') {
+                lineaActual['balance'] = (parseFloat(data) / 100000) * parseInt(sign + '1');
+                continue;
+            }
+
+            if (wordIndex === '574') {
+                lineaActual['dist_total'] = (parseFloat(data) / 100000) * parseInt(sign + '1');
+                continue;
+            }
+        }
+
+        for (const itinerario of itinerariosGsi) {
+            const cotaInicial = itinerario.lineas_gsi[0].cota;
+            const cotaFinal = itinerario.lineas_gsi[itinerario.lineas_gsi.length - 1].cota;
+            itinerario.error_de_cierre = (cotaFinal - cotaInicial) * 1000;
+            itinerario.distancia_total = itinerario.lineas_gsi[itinerario.lineas_gsi.length - 1].dist_acum;
+            itinerario.error_km = Math.abs(itinerario.error_de_cierre / (Math.sqrt(itinerario.distancia_total / 1000)));
+            itinerario.tolerancia = 0.3 * Math.sqrt(itinerario.distancia_total / 1000);
+            for (const linea of itinerario.lineas_gsi) {
+                if (linea.cota) {
+                    linea['cota_comp'] = linea.cota - (linea.dist_acum * itinerario.error_de_cierre / itinerario.distancia_total);
+                }
+            }
+        }
+
+        console.log(itinerariosGsi);
+
+        estadilloDiv.classList.add('d-none');
+        formGsiDiv.classList.add('d-none');
+        resultGsiDiv.classList.remove('d-none');
+        
+        for (const itinerario of itinerariosGsi) {
+            crearTablaGsi(itinerario, resultGsiTablesDiv, 'gsi');
+        }
+
+        // Añadir eventos a los botones de aceptar y rechazar
+        resultGsiTablesDiv.addEventListener('click', async (event) => {
+            if (event.target.tagName === 'BUTTON' && event.target.id.includes('btn-success')) {
+                const itinerario = event.target.getAttribute('itinerario');
+                const itinerarioGsi = itinerariosGsi.find(itinerarioGsi => itinerarioGsi.itinerario === parseInt(itinerario));
+                const nomsCampoUnicos = [...new Set(itinerarioGsi.lineas_gsi.map(linea => linea.nom_campo))];
+                console.log(nomsCampoUnicos);
+
+                resultGsiDiv.classList.add('d-none');
+                progressBarDiv.classList.remove('d-none');
+
+                const response = await fetch(urlHome, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(nomsCampoUnicos),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log(data);
+
+                    const camposUnicosResponse = [...new Set(data.lineas_reporte.map(linea => linea.nom_campo))];
+                    const idsInexistentes = nomsCampoUnicos.filter(nomCampo => !camposUnicosResponse.includes(nomCampo));
+                    console.log(camposUnicosResponse);
+                    console.log(idsInexistentes);
+                    if (data.lineas_reporte.length > 0) {
+                        // Ampliar data.lineas_reporte con los campos de itinerarioGsi.lineas_gsi
+                        for (const linea of data.lineas_reporte) {
+                            const lineaGsi = itinerarioGsi.lineas_gsi.find(lineaGsi => lineaGsi.nom_campo === linea.nom_campo && lineaGsi.cota_comp);
+                            let fecha = new Date(itinerarioGsi.fecha).toISOString();
+                            linea.fecha = `${fecha.slice(8, 10)}-${fecha.slice(5, 7)}-${fecha.slice(0, 4)} ${fecha.slice(11, 19)}`;
+                            linea.cota_comp = lineaGsi.cota_comp;
+                            linea.medida = getMedida(linea.cota_comp, linea.lect_ref, linea.medida_ref);
+                            linea.dif_ult_medida = linea.medida - getMedida(linea.ult_lect, linea.lect_ref, linea.medida_ref);
+                            linea.dif_penult_med = linea.medida - getMedida(linea.penult_lect, linea.lect_ref, linea.medida_ref);
+                            linea.dif_antepenult_med = linea.medida - getMedida(linea.antepenult_lect, linea.lect_ref, linea.medida_ref);
+                            linea['linea_gsi'] = lineaGsi;
+                            fecha = new Date(linea.fecha_ref).toISOString();
+                            linea.fecha_ref = `${fecha.slice(8, 10)}-${fecha.slice(5, 7)}-${fecha.slice(0, 4)} ${fecha.slice(11, 19)}`;
+
+                        }
+
+                        console.log(data);
+
+                        progressBarDiv.classList.add('d-none');
+                        resultReportDiv.classList.remove('d-none');
+                        const resultReportExistentesDiv = document.createElement('div');
+                        resultReportExistentesDiv.classList.add('container')
+                        resultReportTablesDiv.appendChild(resultReportExistentesDiv);
+
+                        crearTablaGsi(data, resultReportExistentesDiv, 'report');
+                        
+                    }
+                    
+                    if (idsInexistentes.length > 0) {
+                        itinerarioGsi.lineas_gsi = itinerarioGsi.lineas_gsi.filter(linea =>  idsInexistentes.includes(linea.nom_campo) && linea.cota_comp);
+                        const fecha = new Date(itinerarioGsi.fecha).toISOString();
+                        itinerarioGsi.lineas_gsi.forEach(linea => linea.fecha = `${fecha.slice(8, 10)}-${fecha.slice(5, 7)}-${fecha.slice(0, 4)} ${fecha.slice(11, 19)}`);
+
+                        const resultReportInexistentesDiv = document.createElement('div');
+                        resultReportInexistentesDiv.classList.add('container')
+                        resultReportTablesDiv.appendChild(resultReportInexistentesDiv);
+                        crearTablaGsi(itinerarioGsi, resultReportInexistentesDiv, 'report-inexistentes');
+                    }
+
+                } else {
+                    console.log(`Error: ${response.statusText}`);
+                }
+            }
+        });
+
+        if (itinerariosGsi.length > 1) {
+            buttonsGsiDiv.classList.remove('d-none');
+
+            // Añadir eventos a los botones de aceptar y rechazar todos
+            buttonsGsiDiv.addEventListener('click', async (event) => {});
+        }
+    };
 });
 
-// Función para construir tablas y tarjetas (cards)
-function buildTables(tables) {
-    // Obtener el div donde se mostrarán los resultados
-    const resultDiv = document.getElementById('result');
-    
-    // Iterar sobre cada entrada de las tablas
-    tables.forEach(entry => {
-        // Crear y añadir título del itinerario
-        const title = document.createElement('h3');
-        title.classList.add('container', 'mt-5');
-        title.innerText = `Itinerario ${entry[0]}`;
-        resultDiv.appendChild(title);
+// Función para crear las tablas de los datos GSI
+function crearTablaGsi(itinerario, parentDiv, tableType) {
+    const title = document.createElement('h3');
+    title.classList.add('mt-3');
+    let titleText = '';
+    let numItinerario = 0;
+    if (tableType === 'gsi') {
+        numItinerario = itinerario.itinerario;
+        titleText = `Itinerario ${numItinerario}`;
+    } else if (tableType === 'report') {
+        numItinerario = itinerario.lineas_reporte[0].linea_gsi.itinerario;
+        titleText = `Reporte itinerario ${numItinerario}`;
+    } else if (tableType === 'report-inexistentes') {
+        numItinerario = itinerario.itinerario;
+        titleText = `Reporte itinerario ${numItinerario} - Nombres de campo no encontrados`;
+    }
+    title.textContent = titleText;
+    parentDiv.appendChild(title);
 
-        const itinerario = entry[0];
-        const tableData = JSON.parse(entry[1]);
-
-        // Contenedor para las tarjetas
+    if (tableType === 'gsi') {
+        // Se crean los elementos de las tarjetas
         const cardsDiv = document.createElement('div');
-        cardsDiv.classList.add('card-group');
+        cardsDiv.classList.add('card-group', 'mt-3');
+        createCard(cardsDiv, 'Error de Cierre', itinerario.error_de_cierre.toFixed(5));
+        createCard(cardsDiv, 'Tolerancia', itinerario.tolerancia.toFixed(5));
+        createCard(cardsDiv, 'Error Km a Posteriori', itinerario.error_km.toFixed(5));
+        createCard(cardsDiv, 'Distancia Total', itinerario.distancia_total.toFixed(5));
+        parentDiv.appendChild(cardsDiv);
+    }
 
-        // Crear tarjetas para cada parámetro
-        createCard(cardsDiv, 'Error de Cierre', errorDeCierre[itinerario]);
-        createCard(cardsDiv, 'Tolerancia', tolerancia[itinerario]);
-        createCard(cardsDiv, 'Error Km a Posteriori', errorKmPosteriori[itinerario]);
-        createCard(cardsDiv, 'Distancia Total', distanciaTotal[itinerario]);
-
-        // Añadir las tarjetas al div de resultados
-        resultDiv.appendChild(cardsDiv);
-
-        // Crear botones para aceptar o rechazar la tabla
+    if (tableType === 'gsi' || tableType === 'report') {
+        // Se crean los botones de aceptar y rechazar
         const buttonsDiv = document.createElement('div');
-        buttonsDiv.classList.add('btn-group', 'd-flex', 'justify-content-end');
-        createButtons(buttonsDiv, 'Aceptar', 'Rechazar', `accept-button-${itinerario}`, `reject-button-${itinerario}`);
+        buttonsDiv.classList.add('btn-group', 'd-flex');
+        createButtons(buttonsDiv, 'Aceptar', 'Rechazar', `btn-success${numItinerario}`, `btn-danger${numItinerario}`, { 'itinerario': numItinerario });
+        parentDiv.appendChild(buttonsDiv);
+    } else if (tableType === 'report-inexistentes') {
+        const buttonDescargarInexistentes = document.createElement('button');
+        buttonDescargarInexistentes.classList.add('btn', 'btn-primary', 'm-2');
+        buttonDescargarInexistentes.innerText = 'Descargar cotas de nombres de campo no encontrados';
+        buttonDescargarInexistentes.id = `btn-descargar-inexistentes${numItinerario}`;
+        buttonDescargarInexistentes.setAttribute('type', 'button');
+        parentDiv.appendChild(buttonDescargarInexistentes);
+    }
 
-        // Añadir los botones al div de resultados
-        resultDiv.appendChild(buttonsDiv);
+    // Se crean los elementos de la tabla
+    const tablaDiv = document.createElement('div');
+    tablaDiv.classList.add('table-responsive');
+    const tabla = document.createElement('table');
+    tabla.classList.add('table', 'table-hover', 'mt-3');
+    const thead = document.createElement('thead');
+    const tbody = document.createElement('tbody');
+    tabla.appendChild(thead);
+    tabla.appendChild(tbody);
+    tablaDiv.appendChild(tabla);
+    parentDiv.appendChild(tablaDiv);
 
-        // Crear la tabla de datos
-        const tableDiv = document.createElement('div');
-        tableDiv.classList.add('table-responsive', 'table', 'table-hover', 'mt-3');
-        createTable(tableDiv, tableData);
+    // Se crea el encabezado de la tabla
+    const columnas = [];
+    if (tableType === 'gsi') {
+        columnas.push('METODO', 'ITINERARIO', 'NOM_CAMPO', 'DIST_MIRA', 'COTA', 'ESPALDA', 'FRENTE', 'RADIADO', 'MED_REP', 'DESV_EST', 'MEDIANA', 'BALANCE', 'DIST_TOTAL', 'DIST_ACUM', 'COTA_COMP');
+    } else if (tableType === 'report') {
+        columnas.push('FECHA', 'NOM_CAMPO', 'NOM_SENSOR', 'COTA_COMP', 'ULT_LECT', 'PENULT_LECT', 'ANTEPENULT_LECT', 'FECHA_REF', 'LECT_REF', 'MEDIDA_REF', 'MEDIDA', 'DIF_ULT_MED', 'DIF_PENULT_MED', 'DIF_ANTEPENULT_MED');
+    } else if (tableType === 'report-inexistentes') {
+        columnas.push('FECHA', 'NOM_CAMPO', 'COTA_COMP');
+    }
+    const trHead = document.createElement('tr');
+    trHead.classList.add('table-primary');
+    for (const columna of columnas) {
+        const th = document.createElement('th');
+        th.scope = 'col';
+        th.textContent = columna;
+        th.style.textAlign = 'right';
+        trHead.appendChild(th);
+    }
+    thead.appendChild(trHead);
 
-        // Añadir la tabla al div de resultados
-        resultDiv.appendChild(tableDiv);
-
-        // Añadir eventos a los botones y enviar datos por formulario oculto
-        const form = document.getElementById('hidden-form');
-        const input = document.getElementById('hidden-input');
-        addEventButtonAccept(`accept-button-${itinerario}`, form, 'click', input, 'accept', itinerario, tableData);
-        addEventButtonReject(`reject-button-${itinerario}`, 'click', itinerario);
-    });
-
-    if (tables.length > 1) {
-        // Crear botones para aceptar o rechazar todas las tablas
-        const buttonsDiv = document.getElementById('accept-reject-all');
-        buttonsDiv.classList.add('btn-group', 'd-flex', 'justify-content-end');
-        createButtons(buttonsDiv, 'Aceptar todos', 'Rechazar todos', 'accept-all-button', 'reject-all-button');
-        const form = document.getElementById('hidden-form');
-        const input = document.getElementById('hidden-input');
-        addEventButtonAccept('accept-all-button', form, 'click', input, 'accept-all', 0, tables);
-        addEventButtonReject('reject-all-button', 'click', 0);
+    // Se crean las filas de la tabla
+    const lineas = []
+    if (tableType === 'gsi') {
+        lineas.push(...itinerario.lineas_gsi);
+    } else if (tableType === 'report') {
+        lineas.push(...itinerario.lineas_reporte);
+    } else if (tableType === 'report-inexistentes') {
+        lineas.push(...itinerario.lineas_gsi);
+    }
+    for (const linea of lineas) {
+        const trBody = document.createElement('tr');
+        trBody.classList.add('table-secondary', 'text-nowrap');
+        for (const columna of columnas) {
+            const td = document.createElement('td');
+            let cellContent =  linea[columna.toLowerCase()];
+            // Si el valor de la celda es un float, se formatea con 5 decimales
+            if (typeof cellContent === 'number' && cellContent % 1 !== 0) {
+                cellContent = cellContent.toFixed(5);
+            }
+            td.textContent = cellContent;
+            td.style.textAlign = 'right';
+            trBody.appendChild(td);
+        }
+        tbody.appendChild(trBody);
     }
 }
 
-// Función para crear una tarjeta
+// Función para crear botones
+function createButtons(parentDiv, acceptText, rejectText, idAceptar, idRechazar, attrs) {
+    // Crear botón de aceptar
+    const buttonAccept = document.createElement('button');
+    buttonAccept.classList.add('btn', 'btn-success', 'm-2');
+    buttonAccept.innerText = acceptText;
+    buttonAccept.id = idAceptar;
+    for (const [key, value] of Object.entries(attrs)) {
+        buttonAccept.setAttribute(key, value);
+    }
+
+    // Crear botón de rechazar
+    const buttonReject = document.createElement('button');
+    buttonReject.classList.add('btn', 'btn-danger', 'm-2');
+    buttonReject.innerText = rejectText;
+    buttonReject.id = idRechazar;
+    for (const [key, value] of Object.entries(attrs)) {
+        buttonReject.setAttribute(key, value);
+    }
+
+    // Añadir los botones al div padre
+    parentDiv.appendChild(buttonAccept);
+    parentDiv.appendChild(buttonReject);
+}
+
+// Función para crear las cards
 function createCard(parentDiv, headerText, data) {
     const cardDiv = document.createElement('div');
     cardDiv.classList.add('card', 'text-white', 'bg-primary', 'm-3');
@@ -85,7 +391,7 @@ function createCard(parentDiv, headerText, data) {
 
     const cardText = document.createElement('p');
     cardText.classList.add('card-text');
-    cardText.innerText = Number(data).toFixed(4);
+    cardText.innerText = data;
 
     cardBody.appendChild(cardTitle);
     cardBody.appendChild(cardText);
@@ -94,168 +400,7 @@ function createCard(parentDiv, headerText, data) {
     parentDiv.appendChild(cardDiv);
 }
 
-// Función para crear botones
-function createButtons(parentDiv, acceptText, rejectText, idAceptar, idRechazar) {
-    // Crear botón de aceptar
-    const buttonAccept = document.createElement('button');
-    buttonAccept.classList.add('btn', 'btn-success', 'm-2');
-    buttonAccept.innerText = acceptText;
-    buttonAccept.id = idAceptar;
-
-    // Crear botón de rechazar
-    const buttonReject = document.createElement('button');
-    buttonReject.classList.add('btn', 'btn-danger', 'm-2');
-    buttonReject.innerText = rejectText;
-    buttonReject.id = idRechazar;
-
-    // Añadir los botones al div padre
-    parentDiv.appendChild(buttonAccept);
-    parentDiv.appendChild(buttonReject);
-}
-
-// Función para crear una tabla
-function createTable(parentDiv, data) {
-    const thead = document.createElement('thead');
-    const tbody = document.createElement('tbody');
-
-    const cols = Object.keys(data);
-    const trHead = document.createElement('tr');
-    trHead.classList.add('table-primary');
-    for (let i = 0; i < cols.length; i++) {
-        const th = document.createElement('th');
-        th.scope = 'col';
-        th.innerText = cols[i];
-        trHead.appendChild(th);
-    }
-    thead.appendChild(trHead);
-    parentDiv.appendChild(thead);
-
-    const rows = Object.keys(data[cols[0]]);
-    for (let i = 0; i < rows.length; i++) {
-        const trBody = document.createElement('tr');
-        trBody.classList.add('table-secondary');
-        for (let j = 0; j < cols.length; j++) {
-            const td = document.createElement('td');
-            td.innerText = data[cols[j]][rows[i]];
-            trBody.appendChild(td);
-        }
-        tbody.appendChild(trBody);
-    }
-    parentDiv.appendChild(tbody);
-}
-
-let isFormCreated = false;
-
-// Función para añadir eventos a los botones de aceptar
-function addEventButtonAccept(idButton, formElement, event, inputElement, nameElement, idTable, dataTable) {
-    // TODO: solicitar fecha y hora
-    document.getElementById(idButton).addEventListener(event, (e) => {
-        // Prevenir el comportamiento por defecto
-        e.preventDefault();
-
-        // Verificar si el formulario ya ha sido creado
-        if (isFormCreated) {
-            return;
-        }
-
-        // Marcar que el formulario ya ha sido creado
-        isFormCreated = true;
-
-        // Crear formulario para solicitar fecha y hora
-        const dateTimeForm = document.createElement('form');
-        dateTimeForm.classList.add('p-4');
-        dateTimeForm.id = 'date-time-form';
-        dateTimeForm.innerHTML = `
-            <fieldset>
-            <div class="form-group">
-                <label for="dateInput" class="form-label">Fecha de la lectura</label>
-                <input type="date" id="dateInput" class="form-control" required>
-                <label for="timeInput" class="form-label mt-3">Hora de la lectura</label>
-                <input type="time" id="timeInput" class="form-control" step="1" required>
-            </div>
-            <button type="submit" class="btn btn-primary mt-3">Enviar</button>
-            </fieldset>
-        `;
-
-        // Añadir el formulario
-        const btnGroupDiv = document.getElementById(idButton).parentNode;
-        btnGroupDiv.innerHTML = '';
-        const dateTimeFormDiv = document.createElement('div');
-        dateTimeFormDiv.classList.add('container');
-        dateTimeFormDiv.appendChild(dateTimeForm);
-        
-        // Agregar datetimeFormDiv
-        btnGroupDiv.appendChild(dateTimeFormDiv);
-
-        // Obtener la fecha y hora actual
-        const today = new Date();
-        const date = today.toISOString().slice(0, 10);
-        const time = today.toTimeString().slice(0, 8);
-
-        // Rellenar los campos del formulario
-        document.getElementById('dateInput').value = date;
-        document.getElementById('timeInput').value = time;
-
-        // Escuchar el evento submit del formulario
-        dateTimeForm.addEventListener('submit', (e) => {
-            // Prevenir el comportamiento por defecto
-            e.preventDefault();
-
-            // Obtener la fecha y hora
-            const date = document.getElementById('dateInput').value;
-            const time = document.getElementById('timeInput').value;
-
-            // Crear el objeto a enviar
-            const datetime = `${date} ${time}`;
-            const dataToSend = {
-                'itinerario': idTable,
-                'tableData': dataTable,
-                'datetime': datetime,
-            };
-
-            // Enviar los datos por formulario oculto
-            inputElement.name = nameElement;
-            inputElement.value = JSON.stringify(dataToSend);
-
-            const acceptRejectAllDiv = document.getElementById('accept-reject-all');
-            acceptRejectAllDiv.remove();
-            const resultDiv = document.getElementById('result');
-            resultDiv.style.display = 'none';
-            dateTimeForm.style.display= 'none';
-            const formGsiDiv = document.getElementById('form-gsi');
-            formGsiDiv.remove();
-            const dEstadilloDiv = document.getElementById('d-estadillo');
-            dEstadilloDiv.remove();
-            const progressBarElement = document.getElementById('progress-bar');
-            progressBarElement.classList.remove('d-none');
-
-            formElement.submit();
-            // Borrar el formulario
-        });
-    });
-}
-
-// Función para añadir eventos a los botones de rechazar
-function addEventButtonReject(idButton, event, idTable) {
-    document.getElementById(idButton).addEventListener(event, () => {
-        if (idTable !== 0) {
-            // Borrar la tabla del itinerario rechazado identificada por idTable y recarga la página
-            const index = tables.findIndex(entry => entry[0] === idTable);
-            if (index != -1) {
-                tables.splice(index, 1);
-                document.getElementById('result').innerHTML = '';
-                document.getElementById('accept-reject-all').innerHTML = '';
-                if (tables.length == 0) {
-                    // Si no quedan tablas, recargar la página sin parámetros
-                    location.href = '/';
-                }
-                buildTables(tables);
-            }
-        } else {
-            // Borrar todas las tablas y recargar la página
-            document.getElementById('result').innerHTML = '';
-            document.getElementById('accept-reject-all').innerHTML = '';
-            location.href = '/';
-        }
-    });
+// Función para obtener la medida
+function getMedida(cota, lectura_referencia, medida_referencia) {
+    return (cota - lectura_referencia) * 1000 + medida_referencia;
 }

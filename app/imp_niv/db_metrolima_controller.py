@@ -1,5 +1,5 @@
-from .. import db
 from sqlalchemy import text
+from .. import db
 
 
 def get_dict_id_externo_nom_sensor(id_ext_list):
