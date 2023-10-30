@@ -44,3 +44,7 @@ def get_lectura_inicial(nom_sensor_list):
     dict_lectura_inicial = {item[0]: float(item[2]) if item[2] is not None else None for item in result}
     dict_medida_inicial = {item[0]: float(item[3]) if item[3] is not None else None for item in result}
     return dict_fecha_inicial, dict_lectura_inicial, dict_medida_inicial
+
+
+def close_db_session():
+    db.session.close()

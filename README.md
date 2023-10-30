@@ -31,5 +31,5 @@ FTP_PASS_TD="Contraseña de acceso al servidor FTP"
 Para montar la imagen del Dockerfile (en el powershell de Windows), estableciendo las variables de entorno configuradas en la máquina:
 
 ```console
-docker build --build-arg SECRET_KEY=$env:SECRET_KEY --build-arg DATABASE_LIMA_URL=$env:DATABASE_LIMA_URL --build-arg FTP_SERVER_TD=$env:FTP_SERVER_TD --build-arg FTP_USER_TD=$env:FTP_USER_TD --build-arg FTP_PASS_TD=$env:FTP_PASS_TD -t imp-niv:latest https://github.com/jmarinfi/importador_nivelaciones.git#main
+docker build --build-arg SECRET_KEY=$env:SECRET_KEY --build-arg DATABASE_LIMA_URL=$env:DATABASE_LIMA_URL --build-arg FTP_SERVER_TD=$env:FTP_SERVER_TD --build-arg FTP_USER_TD=$env:FTP_USER_TD --build-arg FTP_PASS_TD=$env:FTP_PASS_TD -t jmarinfi/imp-niv:latest https://github.com/jmarinfi/importador_nivelaciones.git#main
 ```

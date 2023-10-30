@@ -4,6 +4,7 @@
 
 <script>
 const urlHome = "{{ url_for('imp_niv.home') }}";
+const urlEnviarCsv = "{{ url_for('imp_niv.enviar_csv') }}";
 </script>
 
 <div class="container" id="estadillo-div">
@@ -40,22 +41,24 @@ const urlHome = "{{ url_for('imp_niv.home') }}";
 
 <div id="result-gsi" class="container  d-none">
   <div id="tables-gsi" class="container"></div>
-  <div id="accept-reject-all-gsi" class="container d-none btn-group d-flex">
-    <button type="button" class="btn btn-success m-2" id="accept-all-gsi">Aceptar todos</button>
-    <button type="button" class="btn btn-danger m-2" id="reject-all-gsi">Rechazar todos</button>
+  <div id="generate-report-div" class="d-grid gap-2">
+    <button type="button" class="btn btn-lg btn-success m-3" id="generate-report-button">Generar reporte</button>
   </div>
 </div>
 
 <div id="result-report" class="container d-none">
   <div id="tables-report" class="container"></div>
-  <div id="accept-reject-all-report" class="container d-none btn-group d-flex">
-    <button type="button" class="btn btn-success m-2" id="accept-all-report">Aceptar todos</button>
-    <button type="button" class="btn btn-danger m-2" id="reject-all-report">Rechazar todos</button>
+  <div id="generate-csv-div" class="d-grid gap-2">
+    <button type="button" class="btn btn-lg btn-success m-3" id="generate-csv-button">Generar CSV</button>
   </div>
 </div>
 
 <div id="result-csv" class="container d-none">
   <div id="tables-csv" class="container"></div>
+  <div id="send-all-csv" class="d-grid gap-2">
+    <button type="button" class="btn btn-lg btn-primary m-3" id="download-csv-button">Descargar CSV</button>
+    <button type="button" class="btn btn-lg btn-success m-3" id="send-csv-button">Enviar CSV a Tunneldata</button>
+  </div>
 </div>
 
 <div id="progress-bar" class="d-none">
@@ -68,6 +71,6 @@ const urlHome = "{{ url_for('imp_niv.home') }}";
 </div>
 
 <!-- Enlace al archivo JS de la página -->
-<script src="{{ url_for('static', filename='js/home.js') }}"></script>
+<script src="{{ url_for('static', filename='js/home_v2.js') }}"></script>
 
 {% endblock %}
