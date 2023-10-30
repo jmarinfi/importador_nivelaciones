@@ -53,6 +53,5 @@ def enviar_csv():
         try:
             enviar_ftp(data, f'{datetime.now().strftime("%Y%m%d%H%M%S")}.csv', current_app.config['FTP_SERVER_TD'], current_app.config['FTP_USER_TD'], current_app.config['FTP_PASS_TD'])
         except Exception as e:
-            print(e)
             return str(e), 500
     return 'OK'

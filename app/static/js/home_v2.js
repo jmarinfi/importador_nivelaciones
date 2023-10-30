@@ -19,6 +19,12 @@ const sendCsvButton  = document.getElementById('send-csv-button');
 // Elementos de formulario
 const formGsi = document.getElementById('form-gsi');
 
+// Elementos de alerta
+const alertSuccessDiv = document.getElementById('alert-success');
+const alertDangerDiv = document.getElementById('alert-danger');
+const alertSuccessText = document.getElementById('alert-success-text');
+const alertDangerText = document.getElementById('alert-danger-text');
+
 // Urls de los endpoints
 urlHome;
 urlEnviarCsv;
@@ -48,7 +54,8 @@ async function capturarGsi(event) {
     const file = formData.get('formFile');
 
     if (file.size === 0) {
-        alert('No se ha seleccionado ningún archivo');
+        alertDangerDiv.classList.remove('d-none');
+        alertDangerText.textContent = 'No se ha seleccionado ningún archivo';
         return;
     }
 
@@ -67,6 +74,12 @@ async function capturarGsi(event) {
         estadilloDiv.classList.add('d-none');
         formGsiDiv.classList.add('d-none');
         resultGsiDiv.classList.remove('d-none');
+        if (!alertDangerDiv.classList.contains('d-none')) {
+            alertDangerDiv.classList.add('d-none');
+        }
+        if (!alertSuccessDiv.classList.contains('d-none')) {
+            alertSuccessDiv.classList.add('d-none');
+        }
 
         for (let itinerario of itinerariosGsi) {
             itinerario = crearTablaGsi(itinerario, itinerariosGsi, resultGsiTablesDiv, 'gsi');
@@ -109,7 +122,8 @@ async function capturarGsi(event) {
                     data = crearTablaGsi(data, null, resultReportTablesDiv, 'report');
 
                 } else {
-                    alert('No se encontraron datos en la base de datos');
+                    alertDangerDiv.classList.remove('d-none');
+                    alertDangerText.textContent = 'No se encontraron datos en la base de datos';
                     generateCsvButton.classList.add('d-none');
                 }
 
@@ -169,18 +183,33 @@ async function capturarGsi(event) {
                         if (response.ok) {
                             const data = await response.text();
                             if (data === 'OK') {
-                                document.location.reload();
-                                alert('CSV enviado correctamente');
+                                progressBarDiv.classList.add('d-none');
+                                alertSuccessDiv.classList.remove('d-none');
+                                alertSuccessText.textContent = 'CSV enviado correctamente.\n';
+                                // Añadir enlace al inicio en el mensaje de éxito
+                                const link = document.createElement('a');
+                                link.setAttribute('href', urlHome);
+                                link.textContent = 'Volver al inicio';
+                                alertSuccessText.appendChild(link);
+
                             } else {
-                                alert('No se ha podido enviar el CSV al servidor. Vuelve a intentarlo o descárgalo e impórtalo manualmente.\n' + response.statusText);
+                                progressBarDiv.classList.add('d-none');
+                                alertDangerDiv.classList.remove('d-none');
+                                alertDangerText.textContent = 'No se ha podido enviar el CSV al servidor. Vuelve a intentarlo o descárgalo e impórtalo manualmente.\n' + response.statusText + '\n';
+                                const link = document.createElement('a');
+                                link.setAttribute('href', urlHome);
+                                link.textContent = 'Volver al inicio';
+                                alertDangerText.appendChild(link);
                             }
                         } else {
-                            alert('Error al enviar los datos\n' + response.statusText);
+                            alertDangerDiv.classList.remove('d-none');
+                            alertDangerText.textContent = 'Error al enviar los datos\n' + response.statusText;
                         }
                     });
                 });
             } else {
-                alert('Error al obtener los datos del servidor\n' + response.statusText);
+                alertDangerDiv.classList.remove('d-none');
+                alertDangerText.textContent = 'Error al obtener los datos del servidor\n' + response.statusText;
                 document.location.href = urlHome;
             }
         });
@@ -448,9 +477,9 @@ function crearTablaGsi(itinerario, itinerarios, parentDiv, tableType) {
             let cellContent = linea[columna.toLowerCase()];
             if (typeof cellContent === 'number' && cellContent % 1 !== 0) {
                 cellContent = cellContent.toFixed(5);
-                if (columna === 'DIF_ULT_MED' && Math.abs(cellContent) > 0.5) {
+                if (columna === 'DIF_ULT_MED' && Math.abs(cellContent) >= 0.7) {
                     trBody.classList.add('table-warning')
-                    if (Math.abs(cellContent) > 1) {
+                    if (Math.abs(cellContent) >= 1) {
                         trBody.classList.remove('table-warning')
                         trBody.classList.add('table-danger')
                     }

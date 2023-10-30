@@ -7,6 +7,16 @@ const urlHome = "{{ url_for('imp_niv.home') }}";
 const urlEnviarCsv = "{{ url_for('imp_niv.enviar_csv') }}";
 </script>
 
+<div id="alert-success" class="alert alert-dismissible alert-success m-3 d-none">
+  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  <p id="alert-success-text"></p>
+</div>
+
+<div id="alert-danger" class="alert alert-dismissible alert-danger m-3 d-none">
+  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  <p id="alert-danger-text"></p>
+</div>
+
 <div class="container" id="estadillo-div">
   <div class="d-grid gap-2 m-4" id="d-estadillo">
     <a class="btn btn-lg btn-primary" href="{{ url_for('imp_niv.descargar_estadillos') }}" role="button"
