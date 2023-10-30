@@ -32,11 +32,25 @@ const urlEnviarCsv = "{{ url_for('imp_niv.enviar_csv') }}";
 </div>
 
 <script>
-  let now = new Date();
-  let date = now.toISOString().substring(0, 10);
-  let time = now.toTimeString().substring(0, 5);
-  document.getElementById("dateInput").value = date;
-  document.getElementById("timeInput").value = time;
+  document.addEventListener('DOMContentLoaded', () => {
+    let now = new Date();
+
+    let year = now.getFullYear();
+    let month = String(now.getMonth() + 1).padStart(2, '0');
+    let day = String(now.getDate()).padStart(2, '0');
+
+    let date = `${year}-${month}-${day}`;
+
+    let hour = String(now.getHours()).padStart(2, '0');
+    let minute = String(now.getMinutes()).padStart(2, '0');
+    let second = String(now.getSeconds()).padStart(2, '0');
+
+    let time = `${hour}:${minute}:${second}`;
+
+    document.getElementById("dateInput").value = date;
+    document.getElementById("timeInput").value = time;
+  });
+  
 </script>
 
 <div id="result-gsi" class="container  d-none">
@@ -65,9 +79,9 @@ const urlEnviarCsv = "{{ url_for('imp_niv.enviar_csv') }}";
   <div class="progress mt-5">
     <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>
   </div>
-  <div class="col text-center">
+  {# <div class="col text-center">
     <img src="{{ url_for('static', filename='img/EwyoxJrWYAANCpD.jpg') }}" alt="loading" class="img-fluid mt-5">
-  </div>
+  </div> #}
 </div>
 
 <!-- Enlace al archivo JS de la página -->

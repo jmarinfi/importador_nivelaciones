@@ -54,7 +54,7 @@ async function capturarGsi(event) {
 
     const date = formData.get('dateInput');
     const time = formData.get('timeInput');
-    const datetime = new Date(date + ' ' + time).toISOString();
+    const datetime = new Date(date + ' ' + time);
 
     const reader = new FileReader();
     reader.readAsText(file, 'UTF-8');
@@ -97,15 +97,13 @@ async function capturarGsi(event) {
                     data.lineas_reporte.forEach(linea => {
                         const lineaGsi = itinerariosGsi.map(itinerario => itinerario.lineas_gsi).flat().find(lineaGsi => lineaGsi.nom_campo === linea.nom_campo && lineaGsi.cota_comp);
                         linea.linea_gsi = lineaGsi;
-                        const fecha = itinerariosGsi[0].fecha;
-                        linea.fecha = `${fecha.slice(8, 10)}-${fecha.slice(5, 7)}-${fecha.slice(0, 4)} ${fecha.slice(11, 19)}`;
+                        linea.fecha = formatDate(new Date(itinerariosGsi[0].fecha));
                         linea.cota_comp = lineaGsi.cota_comp;
                         linea.medida = getMedida(linea.cota_comp, linea.lect_ref, linea.medida_ref);
                         linea.dif_ult_med = linea.medida - getMedida(linea.ult_lect, linea.lect_ref, linea.medida_ref);
                         linea.dif_penult_med = linea.medida - getMedida(linea.penult_lect, linea.lect_ref, linea.medida_ref);
                         linea.dif_antepenult_med = linea.medida - getMedida(linea.antepenult_lect, linea.lect_ref, linea.medida_ref);
-                        const fechaRef = new Date(linea.fecha_ref).toISOString();
-                        linea.fecha_ref = `${fechaRef.slice(8, 10)}-${fechaRef.slice(5, 7)}-${fechaRef.slice(0, 4)} ${fechaRef.slice(11, 19)}`;
+                        linea.fecha_ref = formatDate(new Date(new Date(linea.fecha_ref)));
                     });
 
                     data = crearTablaGsi(data, null, resultReportTablesDiv, 'report');
@@ -122,8 +120,7 @@ async function capturarGsi(event) {
 
                 if (idsInexistentes.length > 0) {
                     const lineasInexistentes = itinerariosGsi.map(itinerario => itinerario.lineas_gsi).flat().filter(linea => idsInexistentes.includes(linea.nom_campo) && linea.cota_comp);
-                    const fecha = itinerariosGsi[0].fecha;
-                    lineasInexistentes.forEach(linea => { linea.fecha = `${fecha.slice(8, 10)}-${fecha.slice(5, 7)}-${fecha.slice(0, 4)} ${fecha.slice(11, 19)}`;});
+                    lineasInexistentes.forEach(linea => {linea.fecha = formatDate(new Date(itinerariosGsi[0].fecha))});
                     console.log(lineasInexistentes);
 
                     let dataInexistentes = {
@@ -395,6 +392,12 @@ function crearTablaGsi(itinerario, itinerarios, parentDiv, tableType) {
         trHead.appendChild(tdButton);
     }
 
+    if (tableType === 'report') {
+        const tdExtra = document.createElement('td');
+        tdExtra.textContent = '';
+        trHead.appendChild(tdExtra);
+    }
+
     for (const columna of columnas) {
         const th = document.createElement('th');
         th.scope = 'col';
@@ -411,6 +414,7 @@ function crearTablaGsi(itinerario, itinerarios, parentDiv, tableType) {
     } else if (tableType === 'report' || tableType === 'report-inexistentes' || tableType === 'csv') {
         lineas.push(...itinerario.lineas_reporte);
     }
+
     for (const linea of lineas) {
         const trBody = document.createElement('tr');
         trBody.classList.add('table-secondary', 'text-nowrap');
@@ -431,6 +435,12 @@ function crearTablaGsi(itinerario, itinerarios, parentDiv, tableType) {
             const tdButton = document.createElement('td');
             tdButton.appendChild(deleteButton);
             trBody.appendChild(tdButton);
+        }
+
+        if (tableType === 'gsi') {
+            const tdExtra = document.createElement('td');
+            tdExtra.textContent = '';
+            trBody.appendChild(tdExtra);
         }
 
         for (const columna of columnas) {
@@ -551,4 +561,17 @@ function buildCsv(data) {
         ].join(';'));
     }
     return csvRows.join('\n');
+}
+
+
+function formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    const hour = String(date.getHours()).padStart(2, '0');
+    const minute = String(date.getMinutes()).padStart(2, '0');
+    const second = String(date.getSeconds()).padStart(2, '0');
+
+    return `${day}-${month}-${year} ${hour}:${minute}:${second}`;
 }
