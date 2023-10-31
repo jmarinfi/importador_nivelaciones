@@ -82,8 +82,22 @@ async function capturarGsi(event) {
         }
 
         for (let itinerario of itinerariosGsi) {
-            itinerario = crearTablaGsi(itinerario, itinerariosGsi, resultGsiTablesDiv, 'gsi');
+            itinerario = crearTablaGsi(itinerario, itinerariosGsi, resultGsiTablesDiv, 'gsi', itinerario.compensar);
         }
+
+        resultGsiTablesDiv.addEventListener('change', function (event) {
+            if (event.target.type === 'checkbox') {
+                const numItinerario = event.target.id.split('-')[1];
+                console.log(numItinerario);
+                let itinerario = itinerariosGsi.find(itinerario => itinerario.itinerario === parseInt(numItinerario));
+                itinerario.compensar = event.target.checked;
+                console.log(itinerario);
+                resultGsiTablesDiv.innerHTML = '';
+                for (let itinerario of itinerariosGsi) {
+                    itinerario = crearTablaGsi(itinerario, itinerariosGsi, resultGsiTablesDiv, 'gsi', itinerario.compensar);
+                }
+            }
+        });
 
         generateReportButton.addEventListener('click', async function (event) {
             mostrarProgressBar();
@@ -110,6 +124,8 @@ async function capturarGsi(event) {
                     data.lineas_reporte.forEach(linea => {
                         const lineaGsi = itinerariosGsi.map(itinerario => itinerario.lineas_gsi).flat().find(lineaGsi => lineaGsi.nom_campo === linea.nom_campo && lineaGsi.cota_comp);
                         linea.linea_gsi = lineaGsi;
+                        linea.cota = lineaGsi.cota;
+                        linea.itinerario = lineaGsi.itinerario;
                         linea.fecha = formatDate(new Date(itinerariosGsi[0].fecha));
                         linea.cota_comp = lineaGsi.cota_comp;
                         linea.medida = getMedida(linea.cota_comp, linea.lect_ref, linea.medida_ref);
@@ -243,6 +259,7 @@ function procesarGsi(rawContent, datetime) {
                     'tolerancia': 0.0,
                     'error_km': 0.0,
                     'distancia_total': 0.0,
+                    'compensar': true,
                     'lineas_gsi': [],
                 };
                 itinerariosGsi.push(itinerarioActual);
@@ -320,8 +337,8 @@ function procesarGsi(rawContent, datetime) {
 
     itinerariosGsi.forEach(itinerario => {
         const lineasGsi = itinerario.lineas_gsi;
-        const cotaInicial = lineasGsi[0].cota;
-        const cotaFinal = lineasGsi[lineasGsi.length - 1].cota;
+        const cotaInicial = lineasGsi.find(linea => linea.cota).cota;
+        const cotaFinal = [...lineasGsi].reverse().find(linea => linea.cota).cota;
         itinerario.error_de_cierre = (cotaFinal - cotaInicial) * 1000;
         itinerario.distancia_total = lineasGsi[lineasGsi.length - 1].dist_acum;
         const sqrtDistTotal = Math.sqrt(itinerario.distancia_total / 1000);
@@ -336,8 +353,29 @@ function procesarGsi(rawContent, datetime) {
 }
 
 
-function crearTablaGsi(itinerario, itinerarios, parentDiv, tableType) {
-    const itinerarioReturned = itinerario;
+function crearTablaGsi(itinerario, itinerarios, parentDiv, tableType, checked = true) {
+    const itinerarioContainerDiv = document.createElement('div');
+    itinerarioContainerDiv.classList.add('container');
+    parentDiv.appendChild(itinerarioContainerDiv);
+    let itinerarioReturned = itinerario;
+    if (tableType === 'gsi') {
+        if (checked) {
+            const cotaInicial = itinerarioReturned.lineas_gsi.find(linea => linea.cota).cota;
+            const cotaFinal = [...itinerarioReturned.lineas_gsi].reverse().find(linea => linea.cota).cota;
+            itinerarioReturned.error_de_cierre = (cotaFinal - cotaInicial) * 1000;
+            itinerarioReturned.error_km = Math.abs(itinerarioReturned.error_de_cierre / Math.sqrt(itinerarioReturned.distancia_total / 1000));
+            itinerarioReturned.lineas_gsi.forEach(linea => {
+                linea.cota_comp = linea.cota ? linea.cota - (linea.dist_acum * (itinerarioReturned.error_de_cierre / 1000) / itinerarioReturned.distancia_total) : null;
+            });
+        } else {
+            itinerarioReturned.error_de_cierre = 0.0;
+            itinerarioReturned.error_km = 0.0;
+            itinerarioReturned.lineas_gsi.forEach(linea => {
+                linea.cota_comp = linea.cota;
+            });
+        }
+    }
+    
 
     const title = document.createElement('h3');
     title.classList.add('mt-3');
@@ -345,7 +383,8 @@ function crearTablaGsi(itinerario, itinerarios, parentDiv, tableType) {
     let numItinerario = 0;
     if (tableType === 'gsi') {
         numItinerario = itinerario.itinerario;
-        titleText = `Itinerario ${numItinerario}`;
+        textCompensado = checked ? 'con cotas compensadas' : 'con cotas sin compensar';
+        titleText = `Itinerario ${numItinerario} ${textCompensado}`;
     } else if (tableType === 'report') {
         titleText = `Reporte de nivelación`;
     } else if (tableType === 'report-inexistentes') {
@@ -354,7 +393,7 @@ function crearTablaGsi(itinerario, itinerarios, parentDiv, tableType) {
         titleText = `CSV a enviar a la base de datos`;
     }
     title.textContent = titleText;
-    parentDiv.appendChild(title);
+    itinerarioContainerDiv.appendChild(title);
 
     const cardsDiv = document.createElement('div');
 
@@ -364,14 +403,49 @@ function crearTablaGsi(itinerario, itinerarios, parentDiv, tableType) {
         let  styles = ['card', 'text-white', 'bg-primary', 'm-3']
         createCard(cardsDiv, 'Distancia Total', itinerario.distancia_total.toFixed(5), styles);
         createCard(cardsDiv, 'Tolerancia', itinerario.tolerancia.toFixed(5), styles);
-        if (Math.abs(itinerario.error_de_cierre) > itinerario.tolerancia) {
-            styles = styles.filter(style => style !== 'bg-primary');
-            styles.push('bg-danger');
+        if (checked) {
+            if (Math.abs(itinerario.error_de_cierre) > itinerario.tolerancia) {
+                styles = styles.filter(style => style !== 'bg-primary');
+                styles.push('bg-danger');
+            }
+            createCard(cardsDiv, 'Error de Cierre', itinerario.error_de_cierre.toFixed(5), styles);
+            createCard(cardsDiv, 'Error Km a Posteriori', itinerario.error_km.toFixed(5), styles);
         }
-        createCard(cardsDiv, 'Error de Cierre', itinerario.error_de_cierre.toFixed(5), styles);
-        createCard(cardsDiv, 'Error Km a Posteriori', itinerario.error_km.toFixed(5), styles);
         
-        parentDiv.appendChild(cardsDiv);
+        itinerarioContainerDiv.appendChild(cardsDiv);
+    }
+
+    const switchDiv = document.createElement('div');
+
+    // Se crea el switch para compensar o no las cotas
+    if (tableType === 'gsi') {
+        const switchFieldset = document.createElement('fieldset');
+
+        switchFieldset.classList.add('form-group');
+        const switchDivLegend = document.createElement('legend');
+        switchDivLegend.classList.add('mt-4');
+        switchDivLegend.textContent = 'Compensar cotas';
+        switchFieldset.appendChild(switchDivLegend);
+
+        const formSwitchDiv = document.createElement('div');
+        formSwitchDiv.classList.add('form-check', 'form-switch');
+
+        const inputSwitch = document.createElement('input');
+        inputSwitch.classList.add('form-check-input');
+        inputSwitch.type = 'checkbox';
+        inputSwitch.id = `switch-${numItinerario}`;
+        inputSwitch.checked = checked;
+        formSwitchDiv.appendChild(inputSwitch);
+
+        const labelSwitch = document.createElement('label');
+        labelSwitch.classList.add('form-check-label');
+        labelSwitch.htmlFor = `switch-${numItinerario}`;
+        labelSwitch.textContent = 'Compensar';
+        formSwitchDiv.appendChild(labelSwitch);
+
+        switchFieldset.appendChild(formSwitchDiv);
+        switchDiv.appendChild(switchFieldset);
+        itinerarioContainerDiv.appendChild(switchDiv);
     }
 
     if (tableType === 'report-inexistentes') {
@@ -380,7 +454,7 @@ function crearTablaGsi(itinerario, itinerarios, parentDiv, tableType) {
         buttonDescargarInexistentes.innerText = 'Descargar cotas de nombres de campo no encontrados';
         buttonDescargarInexistentes.id = `btn-descargar-inexistentes`;
         buttonDescargarInexistentes.setAttribute('type', 'button');
-        parentDiv.appendChild(buttonDescargarInexistentes);
+        itinerarioContainerDiv.appendChild(buttonDescargarInexistentes);
     }
 
     // Se crean los elementos de la tabla
@@ -393,14 +467,14 @@ function crearTablaGsi(itinerario, itinerarios, parentDiv, tableType) {
     tabla.appendChild(thead);
     tabla.appendChild(tbody);
     tablaDiv.appendChild(tabla);
-    parentDiv.appendChild(tablaDiv);
+    itinerarioContainerDiv.appendChild(tablaDiv);
 
     // Se crea el encabezado de la tabla
     const columnas = [];
     if (tableType === 'gsi') {
         columnas.push('METODO', 'ITINERARIO', 'NOM_CAMPO', 'DIST_MIRA', 'COTA', 'ESPALDA', 'FRENTE', 'RADIADO', 'MED_REP', 'DESV_EST', 'MEDIANA', 'BALANCE', 'DIST_TOTAL', 'DIST_ACUM', 'COTA_COMP');
     } else if (tableType === 'report') {
-        columnas.push('FECHA', 'NOM_CAMPO', 'NOM_SENSOR', 'COTA_COMP', 'ULT_LECT', 'PENULT_LECT', 'ANTEPENULT_LECT', 'FECHA_REF', 'LECT_REF', 'MEDIDA_REF', 'MEDIDA', 'DIF_ULT_MED', 'DIF_PENULT_MED', 'DIF_ANTEPENULT_MED');
+        columnas.push('ITINERARIO', 'NOM_CAMPO', 'NOM_SENSOR', 'COTA', 'COTA_COMP', 'DIF_ULT_MED', 'DIF_PENULT_MED', 'DIF_ANTEPENULT_MED');
     } else if (tableType === 'report-inexistentes') {
         columnas.push('FECHA', 'NOM_CAMPO', 'COTA_COMP');
     } else if (tableType === 'csv') {
@@ -495,11 +569,10 @@ function crearTablaGsi(itinerario, itinerarios, parentDiv, tableType) {
         tbody.appendChild(trBody);
     }
     function borrarItinerario(event) {
-        title.remove();
-        cardsDiv.remove();
-        tablaDiv.remove();
-        itinerarioReturned.lineas_gsi = [];
-        if (itinerarios.every(itinerario => itinerario.lineas_gsi.length === 0)) {
+        itinerarioContainerDiv.remove();
+        itinerarioReturned = null;
+        itinerarios.splice(itinerarios.findIndex(itinerario => itinerario.itinerario === parseInt(numItinerario)), 1);
+        if (itinerarios.length === 0) {
             document.location.reload();
         }
     }
