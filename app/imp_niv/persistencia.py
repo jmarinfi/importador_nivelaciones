@@ -7,5 +7,5 @@ def enviar_ftp(csv: str, remote_path: str, host: str, user: str, password: str) 
 
     with FTP(host=host, user=user, passwd=password) as ftp:
         csv_bytes = BytesIO(csv)
-        ftp.cwd('/LIMA/Linea_2')
+        # ftp.cwd('/LIMA/Linea_2')
         ftp.storbinary(f'STOR {remote_path}', csv_bytes)
