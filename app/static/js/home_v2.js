@@ -681,5 +681,5 @@ function formatDate(date) {
     const minute = String(date.getMinutes()).padStart(2, '0');
     const second = String(date.getSeconds()).padStart(2, '0');
 
-    return `${day}-${month}-${year} ${hour}:${minute}:${second}`;
+    return `${day}/${month}/${year} ${hour}:${minute}:${second}`;
 }
