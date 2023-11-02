@@ -224,9 +224,10 @@ async function capturarGsi(event) {
                     });
                 });
             } else {
+
                 alertDangerDiv.classList.remove('d-none');
                 alertDangerText.textContent = 'Error al obtener los datos del servidor\n' + response.statusText;
-                document.location.href = urlHome;
+                document.location.reload();
             }
         });
     }
@@ -399,7 +400,7 @@ function crearTablaGsi(itinerario, itinerarios, parentDiv, tableType, checked = 
 
     if (tableType === 'gsi') {
         // Se crean los elementos de las tarjetas
-        cardsDiv.classList.add('card-group', 'mt-3');
+        cardsDiv.classList.add('card-group', 'mt-3', 'justify-content-around');
         let  styles = ['card', 'text-white', 'bg-primary', 'm-3']
         createCard(cardsDiv, 'Distancia Total', itinerario.distancia_total.toFixed(5), styles);
         createCard(cardsDiv, 'Tolerancia', itinerario.tolerancia.toFixed(5), styles);
@@ -576,6 +577,11 @@ function crearTablaGsi(itinerario, itinerarios, parentDiv, tableType, checked = 
             document.location.reload();
         }
     }
+
+    if (tableType != 'gsi') {
+        window.scrollTo(0, 0);
+    }
+
     return itinerarioReturned;
 }
 
