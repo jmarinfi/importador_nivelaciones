@@ -1,0 +1,1 @@
+console.log("global_utils.js loaded");

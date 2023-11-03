@@ -1,0 +1,1 @@
+console.log("home_utils.js loaded");
