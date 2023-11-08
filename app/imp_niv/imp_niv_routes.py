@@ -1,6 +1,8 @@
+import json
 import os
 from flask import render_template, request, send_file
 
+from app.imp_niv.modelo import ContrModelo
 
 from . import imp_niv_bp
 
@@ -14,9 +16,10 @@ def descargar_estadillos():
 @imp_niv_bp.route('/', methods=['GET', 'POST'])
 def home():
     if request.method == 'POST':
-        # Obtener GSI del request, procesarlo y renderizar los resultados
-        return render_template('imp_niv/report-gsi.html')
-    
+        data = request.get_json()
+        contr_modelo = ContrModelo(data)
+        reporte = contr_modelo.get_reporte_json()
+        return reporte
     return render_template('imp_niv/home.html')
 
 
