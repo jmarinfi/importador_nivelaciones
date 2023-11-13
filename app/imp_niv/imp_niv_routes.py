@@ -17,9 +17,7 @@ def descargar_estadillos():
 def home():
     if request.method == 'POST':
         data = request.get_json()
-        contr_modelo = ContrModelo(data)
-        reporte = contr_modelo.get_reporte_json()
-        return reporte
+        return ContrModelo(data).get_reporte_json()
     return render_template('imp_niv/home.html')
 
 

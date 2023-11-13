@@ -169,9 +169,18 @@ submitGsiButton.addEventListener("click", (event) => {
                             }}]
                         }
                     ]
-                }
+                };
                 createButtonsGroup(descartarButton, itineraryElement);
-                buildTable(itinerary, itineraryElement);
+                const gsiTable = {
+                    'tableDivElement': {'id': 'table-div-' + itinerary.numItinerario, 'classes': ['table-responsive']},
+                    'tableElement': {'id': 'table-' + itinerary.numItinerario, 'classes': ['table', 'table-hover', 'table-dark', 'mt-3']},
+                    'theadElement': {'id': 'thead-' + itinerary.numItinerario, 'classes': []},
+                    'trHeadElement': {'id': 'tr-head-' + itinerary.numItinerario, 'classes': ['table-primary'], 'headerLine': Object.keys(itinerary.linesGsi[0].toOrderedObject())},
+                    'tbodyElement': {'id': 'tbody-' + itinerary.numItinerario, 'classes': []},
+                    'lines': itinerary.getLines(),
+                    'linesHaveButton': false
+                };
+                buildTable(gsiTable, itineraryElement);
             });
 
             const groupButtons = {

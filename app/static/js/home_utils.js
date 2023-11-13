@@ -2,6 +2,7 @@
 
 // Importar módulos
 import { showAlertDanger, showAlertSuccess, createElement } from "./global_utils.js";
+import { ReportLine } from "./report_utils.js";
 
 
 // Declaración de constantes
@@ -60,7 +61,7 @@ class GsiLine {
             'dist_total': this.distTotal,
             'dist_acum': this.distAcum,
             'cota_comp': this.cotaComp
-        }
+        };
     }
 }
 
@@ -80,6 +81,7 @@ class Itinerary {
         this.isCompensated = true;
         this.isDiscarded = false;
         this.headerTable = null;
+        this.linesReport = [];
     }
 
     addLine(line) {
@@ -150,6 +152,10 @@ class Itinerary {
 
     getLines() {
         return this.linesGsi.map(line => line.toOrderedObject());
+    }
+
+    getLinesReport() {
+        return this.linesReport.map(line => line.toOrderedObject());
     }
 
     getUniqueNames() {
@@ -277,7 +283,39 @@ class Gsi {
     }
 
     getUniqueNamesAllItineraries() {
-        return this.itineraries.flatMap(itinerary => itinerary.getUniqueNames());
+        return this.itineraries.filter(itinerary => !itinerary.isDiscarded).flatMap(itinerary => itinerary.getUniqueNames());
+    }
+
+    setLinesReport(arrayLinesReport) {
+        arrayLinesReport.forEach(lineReport => {
+            const itinerary = this.itineraries.find(itinerary => itinerary.linesGsi.find(line => line.nomCampo == lineReport.nom_campo));
+            const reportLine = new ReportLine(
+                itinerary.numItinerario,
+                lineReport.antepenult_lect,
+                lineReport.antepenult_medida,
+                lineReport.fecha_ini,
+                lineReport.fecha_ref,
+                lineReport.lect_ini,
+                lineReport.lect_ref,
+                lineReport.medida_ini,
+                lineReport.medida_ref,
+                lineReport.nom_campo,
+                lineReport.nom_sensor,
+                lineReport.penult_lect,
+                lineReport.penult_medida,
+                lineReport.ult_lect,
+                lineReport.ult_medida
+            );
+            reportLine.isCompensated = itinerary.isCompensated;
+            reportLine.cota = itinerary.linesGsi.filter(line => line.cota).find(line => line.nomCampo == lineReport.nom_campo).cota;
+            reportLine.cotaComp = itinerary.linesGsi.filter(line => line.cota).find(line => line.nomCampo == lineReport.nom_campo).cotaComp;
+            reportLine.setMedida();
+            reportLine.setDifUltMed();
+            reportLine.setDifPenultMed();
+            reportLine.setDifAntepenultMed();
+            itinerary.linesReport.push(reportLine);
+
+        });
     }
 }
 

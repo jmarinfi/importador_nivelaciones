@@ -45,23 +45,23 @@ export function prepareLayout(elementsToHide, elementsToShow) {
 
 
 // Construir una tabla a partir de un itinerario
-export function buildTable(itinerary, parentDiv) {
-    const tableDivElement = createElement('div', 'table-div-' + itinerary.numItinerario, ['table-responsive'], parentDiv);
-    const tableElement = createElement('table', 'table-' + itinerary.numItinerario, ['table', 'table-hover', 'table-dark', 'mt-3'], tableDivElement);
-    const theadElement = createElement('thead', 'thead-' + itinerary.numItinerario, [], tableElement);
-    const trHeadElement = createElement('tr', 'tr-head-' + itinerary.numItinerario, ['table-primary'], theadElement, '');
-    if (!itinerary.linesGsi[0].metodo) {
+export function buildTable(tableObject, parentDiv) {
+    const tableDivElement = createElement('div', tableObject.tableDivElement.id, tableObject.tableDivElement.classes, parentDiv);
+    const tableElement = createElement('table', tableObject.tableElement.id, tableObject.tableElement.classes, tableDivElement);
+    const theadElement = createElement('thead', tableObject.theadElement.id, tableObject.theadElement.classes, tableElement);
+    const trHeadElement = createElement('tr', tableObject.trHeadElement.id, tableObject.trHeadElement.classes, theadElement, '');
+    if (tableObject.linesHaveButton) {
         const thButtonElement = createElement('th', '', ['text-end'], trHeadElement);
     }
-    Object.keys(itinerary.linesGsi[0].toOrderedObject()).forEach(key => {
-        const thElement = createElement('th', 'th-head-' + key, ['text-end'], trHeadElement, key);
+    tableObject.trHeadElement.headerLine.forEach(header => {
+        const thElement = createElement('th', 'th-head-' + header, ['text-end'], trHeadElement, header);
     });
-    const tbodyElement = createElement('tbody', 'tbody-' + itinerary.numItinerario, [], tableElement);
-    itinerary.getLines().forEach(line => {
-        const trElement = createElement('tr', '', ['text-end'], tbodyElement);
-        if (!line.metodo) {
+    const tbodyElement = createElement('tbody', tableObject.tbodyElement.id, tableObject.tbodyElement.classes, tableElement);
+    tableObject.lines.forEach(line => {
+        const trElement = createElement('tr', '', ['text-end', 'text-nowrap'], tbodyElement);
+        if (tableObject.linesHaveButton) {
             const tdButtonElement = createElement('td', '', ['text-end'], trElement);
-            const tdButton = createElement('button', '', ['btn', 'btn-outline-danger', 'btn-sm', 'm-1'], tdButtonElement, 'Descartar');
+            const tdButton = createElement('button', '', ['btn', 'btn-outline-danger', 'btn-sm', 'm-1'], tdButtonElement, 'Descartar', {'type': 'button'});
         }
         Object.entries(line).forEach(([key, value]) => {
             if (typeof value == 'number' && value % 1 !== 0) {

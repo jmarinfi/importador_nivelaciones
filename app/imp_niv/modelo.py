@@ -1,5 +1,4 @@
 from datetime import datetime
-import json
 
 from pydantic import BaseModel
 from .serv_tecnicos import ContrServTecnicos
@@ -10,8 +9,9 @@ class ContrModelo:
         self.noms_campo = noms_campo
         self.serv_tecn = ContrServTecnicos(noms_campo)
         self.noms_sensor = self.get_noms_sensor()
-        self.noms_sensor_clean = [nom_sensor for nom_sensor, _ in self.noms_sensor]
+        self.noms_sensor_clean = [key for key, value in self.noms_sensor.items()]
         self.tres_ult_lect = self.get_tres_ultimas_lecturas()
+        self.tres_ult_med = self.get_tres_ultimas_medidas()
         self.ult_ref = self.get_ultima_referencia()
         self.lect_ini = self.get_lectura_inicial()
         self.report = self.get_reporte()
@@ -22,6 +22,9 @@ class ContrModelo:
     def get_tres_ultimas_lecturas(self):
         return self.serv_tecn.get_tres_ultimas_lecturas(self.noms_sensor_clean)
     
+    def get_tres_ultimas_medidas(self):
+        return self.serv_tecn.get_tres_ultimas_medidas(self.noms_sensor_clean)
+    
     def get_ultima_referencia(self):
         return self.serv_tecn.get_ultima_referencia(self.noms_sensor_clean)
     
@@ -29,8 +32,25 @@ class ContrModelo:
         return self.serv_tecn.get_lectura_inicial(self.noms_sensor_clean)
     
     def get_reporte(self):
-        lineas_reporte = []
-        # TODO: Construir reporte
+        lineas_reporte = [
+            LineaReporte(
+                nom_sensor=key,
+                nom_campo=value,
+                ult_lect=self.tres_ult_lect.get(key, [None, None, None])[2],
+                penult_lect=self.tres_ult_lect.get(key, [None, None, None, None, None])[4],
+                antepenult_lect=self.tres_ult_lect.get(key, [None, None, None, None, None, None, None])[6],
+                ult_medida=self.tres_ult_med.get(key, [None, None, None])[2],
+                penult_medida=self.tres_ult_med.get(key, [None, None, None, None, None])[4],
+                antepenult_medida=self.tres_ult_med.get(key, [None, None, None, None, None, None, None])[6],
+                fecha_ref=self.ult_ref.get(key, [None, None])[1],
+                lect_ref=self.ult_ref.get(key, [None, None, None])[2],
+                medida_ref=self.ult_ref.get(key, [None, None, None, None])[3],
+                fecha_ini=self.lect_ini.get(key, [None, None])[1],
+                lect_ini=self.lect_ini.get(key, [None, None, None])[2],
+                medida_ini=self.lect_ini.get(key, [None, None, None, None])[3]
+            ) for key, value in self.noms_sensor.items()
+        ]
+        
         return Reporte(
             lineas_reporte=lineas_reporte
         )
@@ -51,6 +71,9 @@ class LineaReporte(BaseModel):
     fecha_ref: datetime |None = None
     lect_ref: float |None = None
     medida_ref: float |None = None
+    fecha_ini: datetime |None = None
+    lect_ini: float |None = None
+    medida_ini: float |None = None
 
 
 class Reporte(BaseModel):
