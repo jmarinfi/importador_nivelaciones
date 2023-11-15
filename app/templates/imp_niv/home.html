@@ -4,17 +4,8 @@
 
 <script>
   var urlHome = "{{ url_for('imp_niv.home') }}";
+  var urlEnviarCsv = "{{ url_for('imp_niv.enviar_csv') }}";
 </script>
-
-<!-- <div id="alert-success" class="alert alert-dismissible alert-success m-3 d-none">
-  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-  <p id="alert-success-text"></p>
-</div>
-
-<div id="alert-danger" class="alert alert-dismissible alert-danger m-3 d-none">
-  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-  <p id="alert-danger-text"></p>
-</div> -->
 
 <div class="container" id="estadillo-div">
   <div class="d-grid gap-2 m-4" id="d-estadillo">
@@ -72,6 +63,11 @@
 <div id="result-report" class="container  d-none">
   <div id="tables-report" class="container"></div>
   <div id="generate-csv-button-div" class="d-grid gap-2"></div>
+</div> 
+
+<div id="result-csv" class="container  d-none">
+  <div id="tables-csv" class="container"></div>
+  <div id="send-csv-button-div" class="d-grid gap-2"></div>
 </div> 
 
 <div id="progress-bar" class="d-none">

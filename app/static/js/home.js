@@ -140,7 +140,7 @@ submitGsiButton.addEventListener("click", (event) => {
                         }
                     ]
                 };
-                if (Math.abs(itinerary.errorDeCierre) > itinerary.tolerancia) {
+                if (itinerary.errorKm > itinerary.tolerancia) {
                     const cardErrorCierre = cardsGroup.cards.filter(card => card.id == 'card-error-cierre-' + itinerary.numItinerario);
                     cardErrorCierre[0].classes.splice(cardErrorCierre[0].classes.indexOf('bg-primary'), 1);
                     cardErrorCierre[0].classes.push('bg-danger');
@@ -177,7 +177,7 @@ submitGsiButton.addEventListener("click", (event) => {
                     'theadElement': {'id': 'thead-' + itinerary.numItinerario, 'classes': []},
                     'trHeadElement': {'id': 'tr-head-' + itinerary.numItinerario, 'classes': ['table-primary'], 'headerLine': Object.keys(itinerary.linesGsi[0].toOrderedObject())},
                     'tbodyElement': {'id': 'tbody-' + itinerary.numItinerario, 'classes': []},
-                    'lines': itinerary.getLines(),
+                    'lines': itinerary.linesGsi,
                     'linesHaveButton': false
                 };
                 buildTable(gsiTable, itineraryElement);

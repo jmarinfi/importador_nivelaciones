@@ -23,6 +23,7 @@ export class ReportLine {
         this.difUltMed = null;
         this.difPenultMed = null;
         this.difAntepenultMed = null;
+        this.isDiscarded = false;
     }
 
     setMedida() {
@@ -79,5 +80,28 @@ export class ReportLine {
             'dif_penult_med': this.difPenultMed,
             'dif_antepenult_med': this.difAntepenultMed
         };
+    }
+}
+
+
+// Clase para una línea de sensor inexistente en la base de datos
+export class GsiInxLine {
+    constructor(numItinerario, nomCampo, fecha, lectura) {
+        this.numItinerario = numItinerario;
+        this.nomCampo = nomCampo;
+        this.fecha = fecha;
+        this.lectura = lectura;
+    }
+
+    toOrderedObject() {
+        return {
+            'nom_campo': this.nomCampo,
+            'fecha': this.fecha,
+            'lectura': this.lectura
+        };
+    }
+
+    toString() {
+        return this.nomCampo + ';' + this.fecha + ';' + this.lectura;
     }
 }

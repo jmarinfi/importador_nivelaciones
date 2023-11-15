@@ -62,14 +62,32 @@ export function buildTable(tableObject, parentDiv) {
         if (tableObject.linesHaveButton) {
             const tdButtonElement = createElement('td', '', ['text-end'], trElement);
             const tdButton = createElement('button', '', ['btn', 'btn-outline-danger', 'btn-sm', 'm-1'], tdButtonElement, 'Descartar', {'type': 'button'});
+            tdButton.addEventListener('click', () => {
+                line.isDiscarded = true;
+                trElement.remove();
+                if (tbodyElement.childElementCount == 0) {
+                    tableDivElement.remove();
+                }
+                if (tableObject.functionButton) {
+                    tableObject.functionButton();
+                }
+            });
         }
-        Object.entries(line).forEach(([key, value]) => {
+        Object.entries(line.toOrderedObject()).forEach(([key, value]) => {
             if (typeof value == 'number' && value % 1 !== 0) {
                 value = value.toFixed(4);
             }
             const tdElement = createElement('td', '', ['text-end'], trElement, value);
+            if (key === 'dif_ult_med' || key === 'dif_penult_med' || key === 'dif_antepenult_med') {
+                if (Math.abs(value) >= 1) {
+                    tdElement.classList.add('table-danger');
+                } else if (Math.abs(value) >= 0.7) {
+                    tdElement.classList.add('table-warning');
+                }
+            }
         });
     });
+    scrollTo(0, 0);
 }
 
 
@@ -84,4 +102,18 @@ export function createButtonsGroup(buttonsGroupObject, parentDiv) {
             });
         }
     });
+}
+
+
+// Función para formatear las fechas y horas
+export function formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    const hour = String(date.getHours()).padStart(2, '0');
+    const minute = String(date.getMinutes()).padStart(2, '0');
+    const second = String(date.getSeconds()).padStart(2, '0');
+
+    return `${day}/${month}/${year} ${hour}:${minute}:${second}`;
 }

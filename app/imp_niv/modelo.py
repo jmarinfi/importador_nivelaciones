@@ -5,19 +5,21 @@ from .serv_tecnicos import ContrServTecnicos
 
 
 class ContrModelo:
-    def __init__(self, noms_campo) -> None:
-        self.noms_campo = noms_campo
-        self.serv_tecn = ContrServTecnicos(noms_campo)
-        self.noms_sensor = self.get_noms_sensor()
-        self.noms_sensor_clean = [key for key, value in self.noms_sensor.items()]
-        self.tres_ult_lect = self.get_tres_ultimas_lecturas()
-        self.tres_ult_med = self.get_tres_ultimas_medidas()
-        self.ult_ref = self.get_ultima_referencia()
-        self.lect_ini = self.get_lectura_inicial()
-        self.report = self.get_reporte()
+    def __init__(self, noms_campo=None, csv=None) -> None:
+        self.serv_tecn = ContrServTecnicos()
+        if noms_campo:
+            self.noms_sensor = self.get_noms_sensor(noms_campo)
+            self.noms_sensor_clean = [key for key, value in self.noms_sensor.items()]
+            self.tres_ult_lect = self.get_tres_ultimas_lecturas()
+            self.tres_ult_med = self.get_tres_ultimas_medidas()
+            self.ult_ref = self.get_ultima_referencia()
+            self.lect_ini = self.get_lectura_inicial()
+            self.report = self.get_reporte()
+        if csv:
+            self.csv = csv
 
-    def get_noms_sensor(self):
-        return self.serv_tecn.get_noms_sensor()
+    def get_noms_sensor(self, noms_campo):
+        return self.serv_tecn.get_noms_sensor(noms_campo)
     
     def get_tres_ultimas_lecturas(self):
         return self.serv_tecn.get_tres_ultimas_lecturas(self.noms_sensor_clean)
@@ -57,6 +59,9 @@ class ContrModelo:
     
     def get_reporte_json(self):
         return self.report.model_dump()
+    
+    def enviar_csv(self):
+        self.serv_tecn.send_ftp(self.csv)
     
 
 class LineaReporte(BaseModel):

@@ -1,8 +1,9 @@
 // Autor: Joan Marín
 
 // Importar módulos
-import { showAlertDanger, showAlertSuccess, createElement } from "./global_utils.js";
-import { ReportLine } from "./report_utils.js";
+import { showAlertDanger, showAlertSuccess, createElement, formatDate } from "./global_utils.js";
+import { ReportLine, GsiInxLine } from "./report_utils.js";
+import { CsvLine } from "./csv_utils.js";
 
 
 // Declaración de constantes
@@ -82,6 +83,8 @@ class Itinerary {
         this.isDiscarded = false;
         this.headerTable = null;
         this.linesReport = [];
+        this.linesGsiInx = [];
+        this.linesCsv = [];
     }
 
     addLine(line) {
@@ -150,16 +153,33 @@ class Itinerary {
         this.compensateCotas();
     }
 
-    getLines() {
-        return this.linesGsi.map(line => line.toOrderedObject());
-    }
-
-    getLinesReport() {
-        return this.linesReport.map(line => line.toOrderedObject());
-    }
-
     getUniqueNames() {
         return [...new Set(this.linesGsi.map(line => line.nomCampo))];
+    }
+
+    setLinesGsiInx() {
+        const linesGsiInx = this.linesGsi.filter(line => line.cota && !this.linesReport.find(lineReport => lineReport.nomCampo == line.nomCampo));
+        linesGsiInx.forEach(line => {
+            const lectura = this.isCompensated ? line.cotaComp : line.cota;
+            this.linesGsiInx.push(new GsiInxLine(
+                this.numItinerario,
+                line.nomCampo,
+                formatDate(this.fecha),
+                lectura
+            ));
+        });
+    }
+
+    setLinesCsv() {
+        const linesCsv = this.linesReport.filter(line => !line.isDiscarded);
+        linesCsv.forEach(line => {
+            const lectura = this.isCompensated ? line.cotaComp : line.cota;
+            this.linesCsv.push(new CsvLine(
+                line.nomSensor,
+                formatDate(this.fecha),
+                lectura
+            ));
+        });
     }
 }
 
