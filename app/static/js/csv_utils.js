@@ -14,6 +14,6 @@ export class CsvLine {
     }
 
     toString() {
-        return this.nomSensor + ';' + this.fecha + ';' + this.lectura;
+        return this.fecha + ';' + this.nomSensor + ';' + this.lectura;
     }
 }
