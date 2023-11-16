@@ -75,7 +75,11 @@ export function buildTable(tableObject, parentDiv) {
         }
         Object.entries(line.toOrderedObject()).forEach(([key, value]) => {
             if (typeof value == 'number' && value % 1 !== 0) {
-                value = value.toFixed(4);
+                if (key === 'cota' || key === 'cota_comp') {
+                    value = value.toFixed(5);
+                } else {
+                    value = value.toFixed(4);
+                }
             }
             const tdElement = createElement('td', '', ['text-end'], trElement, value);
             if (key === 'dif_ult_med' || key === 'dif_penult_med' || key === 'dif_antepenult_med') {

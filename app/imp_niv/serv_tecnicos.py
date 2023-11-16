@@ -2,37 +2,59 @@ from datetime import datetime
 from ftplib import FTP
 from io import BytesIO
 from flask import current_app
-from sqlalchemy import null, text
+from sqlalchemy import text
 
 from .. import db
 
 
 class ContrServTecnicos:
     def __init__(self) -> None:
-        self.db_metrolima = DBMetroLima(db)
-        self.ftp_metrolima = FTPMetroLima(current_app.config['FTP_SERVER_TD'], current_app.config['FTP_USER_TD'], current_app.config['FTP_PASS_TD'])
+        self.db_metrolima = None
+        self.ftp_metrolima = None
+
+    def set_db_metrolima(self, db):
+        if not self.db_metrolima:
+            self.db_metrolima = DBMetroLima(db)
+    
+    def set_ftp_metrolima(self):
+        if not self.ftp_metrolima:
+            self.ftp_metrolima = FTPMetroLima(current_app.config['FTP_SERVER_TD'], current_app.config['FTP_USER_TD'], current_app.config['FTP_PASS_TD'])
+
+    def close_db_metrolima(self):
+        self.db_metrolima.close()
 
     def get_noms_sensor(self, noms_campo):
+        self.set_db_metrolima(db)
         result = self.db_metrolima.get_noms_sensor(noms_campo)
+        self.close_db_metrolima()
         return {nom_sensor: id_ext for nom_sensor, id_ext in result}
     
     def get_tres_ultimas_lecturas(self, noms_sensor):
+        self.set_db_metrolima(db)
         result = self.db_metrolima.get_tres_ultimas_lecturas(noms_sensor)
+        self.close_db_metrolima()
         return {item[0]: item for item in result}
     
     def get_tres_ultimas_medidas(self, noms_sensor):
+        self.set_db_metrolima(db)
         result = self.db_metrolima.get_tres_ultimas_medidas(noms_sensor)
+        self.close_db_metrolima()
         return {item[0]: item for item in result}
     
     def get_ultima_referencia(self, noms_sensor):
+        self.set_db_metrolima(db)
         result = self.db_metrolima.get_ultima_referencia(noms_sensor)
+        self.close_db_metrolima()
         return {item[0]: item for item in result}
     
     def get_lectura_inicial(self, noms_sensor):
+        self.set_db_metrolima(db)
         result = self.db_metrolima.get_lectura_inicial(noms_sensor)
+        self.close_db_metrolima()
         return {item[0]: item for item in result}
     
     def send_ftp(self, data, filename=f'{datetime.now().strftime("%Y%m%d%H%M%S")}.csv', remote_path=None):
+        self.set_ftp_metrolima()
         if self.ftp_metrolima.ftpHost == '83.56.34.89':
             remote_path = '/LIMA/Linea_2'
         self.ftp_metrolima.send_ftp(data, filename, remote_path)
@@ -44,7 +66,7 @@ class DBMetroLima:
 
     def get_noms_sensor(self, id_ext_list):
         return self.db.session.execute(
-            text('SELECT S.NOM_SENSOR, S.ID_EXTERNO FROM SENSOR S WHERE S.ID_EXTERNO IN :id_ext_list'),
+            text('SELECT S.NOM_SENSOR, S.ID_EXTERNO FROM SENSOR S WHERE S.ID_SISTEMA <> 75 AND S.ID_EXTERNO IN :id_ext_list'),
             {'id_ext_list': id_ext_list}
         ).fetchall()
     
@@ -71,6 +93,9 @@ class DBMetroLima:
             text("SELECT S.NOM_SENSOR AS SENSOR, (SELECT HH.FECHA_MEDIDA FROM HISTORICO HH WHERE HH.ID_SENSOR=H.ID_SENSOR AND HH.ID_ESTADO_DATO=0 AND HH.ID_FLAG<>'F' ORDER BY HH.FECHA_MEDIDA DESC LIMIT 1) AS ULTIMA_FECHA_MEDIDA, (SELECT HH.MEDIDA FROM HISTORICO HH WHERE HH.ID_SENSOR=H.ID_SENSOR AND HH.FECHA_MEDIDA=ULTIMA_FECHA_MEDIDA) AS ULTIMA_MEDIDA, (SELECT HANT.FECHA_MEDIDA FROM HISTORICO HANT WHERE HANT.ID_SENSOR=H.ID_SENSOR AND HANT.FECHA_MEDIDA<ULTIMA_FECHA_MEDIDA AND HANT.ID_ESTADO_DATO=0 AND HANT.ID_FLAG<>'F' ORDER BY HANT.FECHA_MEDIDA DESC LIMIT 1) AS PENULTIMA_FECHA_MEDIDA, (SELECT HANT.MEDIDA FROM HISTORICO HANT WHERE HANT.ID_SENSOR=H.ID_SENSOR AND HANT.FECHA_MEDIDA=PENULTIMA_FECHA_MEDIDA) AS PENULTIMA_MEDIDA, (SELECT PENULT.FECHA_MEDIDA FROM HISTORICO PENULT WHERE PENULT.ID_SENSOR=H.ID_SENSOR AND PENULT.FECHA_MEDIDA<PENULTIMA_FECHA_MEDIDA AND PENULT.ID_ESTADO_DATO=0 AND PENULT.ID_FLAG<>'F' ORDER BY PENULT.FECHA_MEDIDA DESC LIMIT 1) AS ANTEPENULTIMA_FECHA_MEDIDA, (SELECT PENULT.MEDIDA FROM HISTORICO PENULT WHERE PENULT.ID_SENSOR=H.ID_SENSOR AND PENULT.FECHA_MEDIDA=ANTEPENULTIMA_FECHA_MEDIDA) AS ANTEPENULTIMA_MEDIDA FROM SENSOR S INNER JOIN HISTORICO H ON S.ID_SENSOR=H.ID_SENSOR WHERE S.NOM_SENSOR IN :noms_sensor GROUP BY SENSOR;"),
             {'noms_sensor': noms_sensor}
         ).fetchall()
+    
+    def close(self):
+        self.db.session.close()
     
 
 class FTPMetroLima:

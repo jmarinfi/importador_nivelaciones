@@ -7,8 +7,8 @@ export class CsvLine {
 
     toOrderedObject() {
         return {
-            'nom_sensor': this.nomSensor,
             'fecha': this.fecha,
+            'nom_sensor': this.nomSensor,
             'lectura': this.lectura
         };
     }

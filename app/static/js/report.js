@@ -69,8 +69,6 @@ export async function fetchReport(url, method, header, body) {
         gsi.itineraries.filter(itinerary => !itinerary.isDiscarded).forEach(itinerary => {
             const itineraryElement = createElement('div', 'itinerary-' + itinerary.numItinerario, ['container'], tablesReportDiv, '');
 
-            // const linesReport = itinerary.getLinesReport();
-
             if (itinerary.linesReport.length > 0) {
                 const titleElement = createElement('h3', 'title-' + itinerary.numItinerario, ['mt-3'], itineraryElement, 'Itinerario ' + itinerary.numItinerario);
 
@@ -96,7 +94,6 @@ export async function fetchReport(url, method, header, body) {
             }
 
             itinerary.setLinesGsiInx();
-            // const linesInx = itinerary.getLinesGsiInx();
             console.log(itinerary.linesGsiInx);
 
             if (itinerary.linesGsiInx.length > 0) {
