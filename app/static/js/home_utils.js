@@ -43,26 +43,46 @@ class GsiLine {
         this.distTotal = null;
         this.distAcum = null;
         this.cotaComp = null;
+        this.compensated = true;
     }
 
     toOrderedObject() {
-        return {
-            'metodo': this.metodo,
-            'itinerario': this.numItinerario,
-            'nom_campo': this.nomCampo,
-            'dist_mira': this.distMira,
-            'cota': this.cota,
-            'espalda': this.espalda,
-            'frente': this.frente,
-            'radiado': this.radiado,
-            'med_rep': this.medRep,
-            'desv_est': this.desvEst,
-            'mediana': this.mediana,
-            'balance': this.balance,
-            'dist_total': this.distTotal,
-            'dist_acum': this.distAcum,
-            'cota_comp': this.cotaComp
-        };
+        if (this.compensated) {
+            return {
+                'metodo': this.metodo,
+                'itinerario': this.numItinerario,
+                'nom_campo': this.nomCampo,
+                'dist_mira': this.distMira,
+                'cota': this.cota,
+                'espalda': this.espalda,
+                'frente': this.frente,
+                'radiado': this.radiado,
+                'med_rep': this.medRep,
+                'desv_est': this.desvEst,
+                'mediana': this.mediana,
+                'balance': this.balance,
+                'dist_total': this.distTotal,
+                'dist_acum': this.distAcum,
+                'cota_comp': this.cotaComp
+            };
+        } else {
+            return {
+                'metodo': this.metodo,
+                'itinerario': this.numItinerario,
+                'nom_campo': this.nomCampo,
+                'dist_mira': this.distMira,
+                'cota': this.cota,
+                'espalda': this.espalda,
+                'frente': this.frente,
+                'radiado': this.radiado,
+                'med_rep': this.medRep,
+                'desv_est': this.desvEst,
+                'mediana': this.mediana,
+                'balance': this.balance,
+                'dist_total': this.distTotal,
+                'dist_acum': this.distAcum
+            };
+        }
     }
 }
 
@@ -121,6 +141,9 @@ class Itinerary {
 
     setCompensation(isCompensated) {
         this.isCompensated = isCompensated;
+        this.linesGsi.forEach(line => {
+            line.compensated = isCompensated;
+        });
         this.setHeader(isCompensated);
     }
 
@@ -360,3 +383,80 @@ export function createCardsGroup(CardGroupObject, parentDiv) {
     });
 }
 
+
+export function getPresas(listas, idRio) {
+    return new Set([...listas.filter(lista => lista.id_rio === idRio).map(lista => lista.nom_presa)]);
+}
+
+
+export async function getSensoresLista(url) {
+    try {
+        const response = await fetch(url);
+        const json = await response.json();
+        return json;
+    } catch (error) {
+        throw error;
+    }
+}
+
+
+class Estadillo {
+    constructor(idLista, nomLista, descripcion, nomPresa, idRio, sensoresLista) {
+        this.idLista = idLista;
+        this.nomLista = nomLista;
+        this.descripcion = descripcion;
+        this.nomPresa = nomPresa;
+        this.idRio = idRio;
+        this.sensoresLista = sensoresLista;
+        this.REG_EXP = /([^\(\)]+)\(([^\(\)]*)\)_?/g;
+        this.bases = null;
+    }
+
+    setBases() {
+        const matches = this.descripcion.matchAll(this.REG_EXP);
+        this.bases = [...matches].map(match => {
+            const nomSensor = match[1];
+            const comentario = match[2];
+            let ult_lect = null;
+            console.log('nomSensor: ' + nomSensor);
+            for (const sensor of this.sensoresLista) {
+                if (sensor.nom_sensor === nomSensor) {
+                    ult_lect = sensor.ult_lect;
+                }
+            }
+            return {
+                'nom_sensor': nomSensor,
+                'comentario': comentario,
+                'ult_lect': ult_lect
+            };
+        });
+    }
+
+    getPdf() {
+        const doc = new window.jspdf.jsPDF();
+        doc.setFontSize(10);
+        doc.text('Estadillo lista ' + this.nomLista + '\nObra ' + this.nomPresa, 10, 10);
+        doc.text('Fecha: ' + formatDate(new Date()), 10, 20);
+        doc.text('Bases: ', 10, 30);
+        doc.autoTable({
+            head: [Object.keys(this.bases[0])],
+            body: this.bases.map(base => Object.values(base))
+        });
+        doc.save('estadillo.pdf');
+    }
+}
+
+
+export function getEstadillo(lista, sensoresLista) {
+    const estadillo =   new Estadillo(
+        lista.id_lista,
+        lista.nom_lista,
+        lista.descripcion,
+        lista.nom_presa,
+        lista.id_rio,
+        sensoresLista
+    );
+    estadillo.setBases();
+
+    return estadillo;
+}

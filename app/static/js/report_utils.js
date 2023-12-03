@@ -66,20 +66,37 @@ export class ReportLine {
     }
 
     toOrderedObject() {
-        return {
-            'nom_campo': this.nomCampo,
-            'nom_sensor': this.nomSensor,
-            'cota': this.cota,
-            'cota_comp': this.cotaComp,
-            'lect_ini': this.lectIni,
-            'medida_ini': this.medidaIni,
-            'lect_ref': this.lectRef,
-            'medida_ref': this.medidaRef,
-            'medida': this.medida,
-            'dif_ult_med': this.difUltMed,
-            'dif_penult_med': this.difPenultMed,
-            'dif_antepenult_med': this.difAntepenultMed
-        };
+        if (this.isCompensated) {
+            return {
+                'nom_campo': this.nomCampo,
+                'nom_sensor': this.nomSensor,
+                'cota': this.cota,
+                'cota_comp': this.cotaComp,
+                'lect_ini': this.lectIni,
+                'medida_ini': this.medidaIni,
+                'lect_ref': this.lectRef,
+                'medida_ref': this.medidaRef,
+                'medida': this.medida,
+                'dif_ult_med': this.difUltMed,
+                'dif_penult_med': this.difPenultMed,
+                'dif_antepenult_med': this.difAntepenultMed
+            };
+        } else {
+            return {
+                'nom_campo': this.nomCampo,
+                'nom_sensor': this.nomSensor,
+                'cota': this.cota,
+                'lect_ini': this.lectIni,
+                'medida_ini': this.medidaIni,
+                'lect_ref': this.lectRef,
+                'medida_ref': this.medidaRef,
+                'medida': this.medida,
+                'dif_ult_med': this.difUltMed,
+                'dif_penult_med': this.difPenultMed,
+                'dif_antepenult_med': this.difAntepenultMed
+            };
+        }
+
     }
 }
 

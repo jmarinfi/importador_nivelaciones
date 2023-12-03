@@ -5,13 +5,15 @@
 <script>
   var urlHome = "{{ url_for('imp_niv.home') }}";
   var urlEnviarCsv = "{{ url_for('imp_niv.enviar_csv') }}";
+  var urlDescargarEstadillos = "{{ url_for('imp_niv.descargar_estadillos') }}";
+  var urlGetSensorsLista = "{{ url_for('imp_niv.get_sensors_lista', id_lista=0) }}";
 </script>
 
-<div class="container" id="estadillo-div">
-  <div class="d-grid gap-2 m-4" id="d-estadillo">
+<div class="accordion" id="estadillo-div">
+  <!-- <div class="d-grid gap-2 m-4" id="d-estadillo">
     <a class="btn btn-lg btn-primary" href="{{ url_for('imp_niv.descargar_estadillos') }}" role="button"
       download>Descarga estadillos de campo</a>
-  </div>
+  </div> -->
 </div>
 
 <div class="container" id="form-gsi-div">

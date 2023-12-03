@@ -58,6 +58,7 @@ export function fetchCsv(gsi) {
         [alertDangerDiv, alertSuccessDiv, estadilloDiv, formGsiDiv, resultGsiDiv, resultReportDiv, progressBarDiv],
         [resultCsvDiv]
     )
+    scrollTo(0, 0);
     buildTable(csvTable, tablesCsvDiv);
 
     const blob = new Blob([allLinesCsv.map(line => line.toString()).join('\n')], { type: 'text/csv;charset=utf-8;' });

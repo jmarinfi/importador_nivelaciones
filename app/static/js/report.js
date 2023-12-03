@@ -47,7 +47,8 @@ export async function fetchReport(url, method, header, body) {
     prepareLayout(
         [estadilloDiv, formGsiDiv, resultGsiDiv],
         [progressBarDiv]
-    ) 
+    );
+    scrollTo(0, 0);
 
     const response = await fetch(url, {
         method: method,

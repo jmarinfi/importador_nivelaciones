@@ -1,6 +1,8 @@
 from datetime import datetime
+import json
 
 from pydantic import BaseModel
+
 from .serv_tecnicos import ContrServTecnicos
 
 
@@ -69,6 +71,35 @@ class ContrModelo:
     
     def enviar_csv(self):
         self.serv_tecn.send_ftp(self.csv)
+
+    def get_listas_json(self):
+        listas = [
+            ListaItinerario(
+                id_lista = item[0],
+                nom_lista=item[1],
+                descripcion=item[2],
+                id_rio=item[3],
+                nom_presa=item[4]
+            ).model_dump() for item in self.serv_tecn.get_listas().values()
+        ]
+
+        return listas
+    
+    def get_sensors_lista_json(self, id_lista):
+        sensores_listas = [
+            SensoresLista(
+                id_lista=item[0],
+                id_sensor=item[1],
+                nom_sensor=item[2],
+                id_externo=item[3],
+                descripcion=item[4],
+                id_sistema=item[5], 
+                ult_lect=item[6],
+                ult_fecha=item[7]
+            ).model_dump() for item in self.serv_tecn.get_sensors_lista(id_lista).values()
+        ]
+        print(sensores_listas)
+        return sensores_listas
     
 
 class LineaReporte(BaseModel):
@@ -90,3 +121,22 @@ class LineaReporte(BaseModel):
 
 class Reporte(BaseModel):
     lineas_reporte: list[LineaReporte] | list[None] | None = None
+
+
+class ListaItinerario(BaseModel):
+    id_lista: int
+    nom_lista: str
+    descripcion: str
+    id_rio: int
+    nom_presa: str
+
+
+class SensoresLista(BaseModel):
+    id_lista: int
+    id_sensor: int
+    nom_sensor: str
+    id_externo: str
+    descripcion: str
+    id_sistema: int
+    ult_lect: float | None = None
+    ult_fecha: datetime | None = None

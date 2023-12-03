@@ -11,8 +11,8 @@ contr_modelo = ContrModelo()
 
 @imp_niv_bp.route('/descargar-estadillos')
 def descargar_estadillos():
-    filepath = os.path.join('../files', 'Estadillos.xlsx')
-    return send_file(filepath, as_attachment=True)
+    listas = contr_modelo.get_listas_json()
+    return listas
 
 
 @imp_niv_bp.route('/', methods=['GET', 'POST'])
@@ -32,3 +32,10 @@ def enviar_csv():
         except Exception as e:
             return str(e), 500
         return 'OK'
+    
+
+@imp_niv_bp.route('/get-sensors-lista/<int:id_lista>')
+def get_sensors_lista(id_lista):
+    sensores_lista = contr_modelo.get_sensors_lista_json(id_lista)
+    print(sensores_lista)
+    return sensores_lista

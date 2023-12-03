@@ -91,7 +91,6 @@ export function buildTable(tableObject, parentDiv) {
             }
         });
     });
-    scrollTo(0, 0);
 }
 
 
@@ -120,4 +119,19 @@ export function formatDate(date) {
     const second = String(date.getSeconds()).padStart(2, '0');
 
     return `${day}/${month}/${year} ${hour}:${minute}:${second}`;
+}
+
+
+// Función para crear radio buttons para un itinerario
+export function createRadioButtonsGroup(radioButtonsGroupObject, parentDiv) {
+    const radioButtonsGroupElement = createElement('div', radioButtonsGroupObject.id, radioButtonsGroupObject.classes, parentDiv, '', radioButtonsGroupObject.attributes);
+    radioButtonsGroupObject.buttons.forEach(buttonObject => {
+        const inputElement = createElement(buttonObject.input['type-element'], buttonObject.input.id, buttonObject.input.classes, radioButtonsGroupElement, '', buttonObject.input.attributes);
+        const labelElement = createElement(buttonObject.label['type-element'], '', buttonObject.label.classes, radioButtonsGroupElement, buttonObject.label.text, buttonObject.label.attributes);
+        if (buttonObject.input.events) {
+            buttonObject.input.events.forEach(event => {
+                inputElement.addEventListener(event.name, event.function);
+            });
+        }
+    });
 }
