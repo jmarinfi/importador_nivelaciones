@@ -126,7 +126,7 @@ class Reporte(BaseModel):
 class ListaItinerario(BaseModel):
     id_lista: int
     nom_lista: str
-    descripcion: str
+    descripcion: str | None = None
     id_rio: int
     nom_presa: str
 
