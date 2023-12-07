@@ -408,29 +408,28 @@ class Estadillo {
         this.nomPresa = nomPresa;
         this.idRio = idRio;
         this.sensoresLista = sensoresLista;
-        this.REG_EXP = /([^\(\)]+)\(([^\(\)]*)\)_?/g;
         this.bases = null;
     }
 
-    setBases() {
-        const matches = this.descripcion.matchAll(this.REG_EXP);
-        this.bases = [...matches].map(match => {
-            const nomSensor = match[1];
-            const comentario = match[2];
-            let ult_lect = null;
-            console.log('nomSensor: ' + nomSensor);
-            for (const sensor of this.sensoresLista) {
-                if (sensor.nom_sensor === nomSensor) {
-                    ult_lect = sensor.ult_lect;
-                }
-            }
-            return {
-                'nom_sensor': nomSensor,
-                'comentario': comentario,
-                'ult_lect': ult_lect
-            };
-        });
-    }
+    // setBases() {
+    //     const matches = this.descripcion.matchAll(this.REG_EXP);
+    //     this.bases = [...matches].map(match => {
+    //         const nomSensor = match[1];
+    //         const comentario = match[2];
+    //         let ult_lect = null;
+    //         console.log('nomSensor: ' + nomSensor);
+    //         for (const sensor of this.sensoresLista) {
+    //             if (sensor.nom_sensor === nomSensor) {
+    //                 ult_lect = sensor.ult_lect;
+    //             }
+    //         }
+    //         return {
+    //             'nom_sensor': nomSensor,
+    //             'comentario': comentario,
+    //             'ult_lect': ult_lect
+    //         };
+    //     });
+    // }
 
     getPdf() {
         const doc = new window.jspdf.jsPDF();
@@ -456,7 +455,7 @@ export function getEstadillo(lista, sensoresLista) {
         lista.id_rio,
         sensoresLista
     );
-    estadillo.setBases();
+    //estadillo.setBases();
 
     return estadillo;
 }

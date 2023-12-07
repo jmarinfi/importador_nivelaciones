@@ -37,5 +37,4 @@ def enviar_csv():
 @imp_niv_bp.route('/get-sensors-lista/<int:id_lista>')
 def get_sensors_lista(id_lista):
     sensores_lista = contr_modelo.get_sensors_lista_json(id_lista)
-    print(sensores_lista)
     return sensores_lista

@@ -136,8 +136,8 @@ class SensoresLista(BaseModel):
     id_lista: int
     id_sensor: int
     nom_sensor: str
-    id_externo: str
-    descripcion: str
+    id_externo: str | None = None
+    descripcion: str | None = None
     id_sistema: int
     ult_lect: float | None = None
     ult_fecha: datetime | None = None
