@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         const diccionarioTramos = {
             '62': 'Tramo 3',
-            '64': 'Tramo 4',
+            '64': 'Tramo 1',
             '65': 'Etapa 1A',
             '66': 'Etapa 1B',
             '67': 'Ramal L4',

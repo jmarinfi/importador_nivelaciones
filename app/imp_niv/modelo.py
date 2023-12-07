@@ -95,10 +95,11 @@ class ContrModelo:
                 descripcion=item[4],
                 id_sistema=item[5], 
                 ult_lect=item[6],
-                ult_fecha=item[7]
+                ult_fecha=item[7], 
+                id_inc_estado=item[8],
+                comentario=item[9]
             ).model_dump() for item in self.serv_tecn.get_sensors_lista(id_lista).values()
         ]
-        print(sensores_listas)
         return sensores_listas
     
 
@@ -140,3 +141,5 @@ class SensoresLista(BaseModel):
     id_sistema: int
     ult_lect: float | None = None
     ult_fecha: datetime | None = None
+    id_inc_estado: int | None = None
+    comentario: str | None = None
