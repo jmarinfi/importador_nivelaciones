@@ -2,3 +2,10 @@
 
 Aplicación web que procesa datos de nivelación y los envía al servidor. Versión desarrollada en React para el frontend, y Express de NodeJS para el backend.
 
+Para instalar en modo desarrollador:
+
+1. Clonar la rama del repositorio.
+2. Entrar al  proyecto `cd importador_nivelaciones`
+3. Instalar las dependencias con `npm install`
+4. Entrar a la carpeta frontend `cd frontend`
+5. Instalar las dependencias de React con `npm install`
