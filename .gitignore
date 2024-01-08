@@ -1,7 +1,1 @@
-/venv/
-*__pycache__/
-/.vscode/
-/files/gsi/
-test.py
-instance
-properties.properties
+node_modules
