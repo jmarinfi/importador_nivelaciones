@@ -1,7 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './bootstrap.css'
 import PropTypes from 'prop-types'
 import FormGsi from './components/FormGsi'
+import Notification from './components/Notification'
+import Utils from './services/utilsGsi'
+import Table from './components/Table'
 
 
 const NavBar = ({ handleHome, handleEstadillos }) => {
@@ -36,6 +39,9 @@ NavBar.propTypes = {
 
 
 const App = () => {
+    const [showForm, setShowForm] = useState(true)
+    const [showGsi, setShowGsi] = useState(false)
+    const [notification, setNotification] = useState({ message: undefined, type: undefined })
     const [file, setFile] = useState(null)
     const [gsi, setGsi] = useState(null)
 
@@ -43,28 +49,67 @@ const App = () => {
         event.preventDefault()
         setGsi(null)
         setFile(null)
+        setNotification({ message: undefined, type: undefined })
+        setShowForm(true)
+        setShowGsi(false)
     }
 
     const handleEstadillosClick = (event) => {
         event.preventDefault()
         console.log('Estadillos');
-        // Construir Estadillos
+        // TODO: Construir Estadillos
     }
 
-    const handleFileChange = (event) => {
-        setFile(event.target.files[0])
+    const onFileChange = (event) => {
+        const file = event.target.files[0]
+        if (!file.name.toLowerCase().endsWith('.gsi')) {
+            setNotification({ message: 'Archivo no válido', type: 'danger' })
+            event.target.value = null
+            return
+        }
+        if (file.size === 0) {
+            setNotification({ message: 'Archivo vacío', type: 'danger' })
+            event.target.value = null
+            return
+        }
+        setNotification({ message: undefined, type: undefined })
+        setFile(file)
     }
 
     const handleSubmitFile = (date, time) => {
-        console.log(file, date, time);
-        // Construir GSI
-        setGsi('gsi')
+        setNotification({ message: undefined, type: undefined })
+        // TODO: Construir GSI
+        Utils.readTextFile(file)
+            .then((data) => {
+                setShowForm(false)
+                setGsi(Utils.parseGsi(data, date, time));
+                setShowGsi(true)
+            })
+            .catch((error) => {
+                console.log(error)
+                setNotification({
+                    message: error.message || 'Error al leer el archivo',
+                    type: 'danger'
+                })
+            })
     }
+
+    useEffect(() => {
+        console.log(gsi);
+    }, [gsi])
 
     return (
         <div>
             <NavBar handleHome={handleHomeClick} handleEstadillos={handleEstadillosClick} />
-            {gsi ? <h1>Tabla GSI</h1> : <FormGsi handleFileChange={handleFileChange} onFormSubmit={handleSubmitFile} />}
+            <Notification text={notification.message} type={notification.type} />
+            {showForm ? <FormGsi handleFileChange={onFileChange} onFormSubmit={handleSubmitFile} /> : null}
+            {showGsi ? gsi.itinerarios.map(itinerario => (
+                <Table
+                    key={`itinerario${itinerario.numItinerario}_gsi`}
+                    title={`Itinerario ${itinerario.numItinerario}`}
+                    header={itinerario.encabezado}
+                    lines={itinerario.lineas} />
+            )) : null}
         </div>
     )
 }
