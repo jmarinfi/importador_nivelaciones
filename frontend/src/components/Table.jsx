@@ -58,7 +58,7 @@ const Table = ({ title, header, lines }) => {
 }
 
 Table.propTypes = {
-    title: PropTypes.string.isRequired,
+    title: PropTypes.string,
     header: PropTypes.array.isRequired,
     lines: PropTypes.array.isRequired
 }

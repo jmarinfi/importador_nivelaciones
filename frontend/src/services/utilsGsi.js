@@ -150,8 +150,32 @@ const parseGsi = (contentFile, date, time) => {
     return gsi;
 }
 
+const getSqrtDistTotal = dist => Math.sqrt(dist / 1000)
 
-const Utils = { readTextFile, parseGsi };
+const getDistanciaTotal = (lineas) => {
+    return lineas[lineas.length - 1].dist_acum.toFixed(4)
+}
+
+const getTolerancia = lineas => (0.3 * getSqrtDistTotal(getDistanciaTotal(lineas))).toFixed(4)
+
+const getErrorDeCierre = (lineas) => {
+    const cotaInicial = lineas.find(line => line.cota).cota
+    const cotaFinal = [...lineas].reverse().find(line => line.cota).cota
+
+    return ((cotaFinal - cotaInicial) * 1000).toFixed(4)
+}
+
+const getErrorKm = lineas => Math.abs(getErrorDeCierre(lineas) / getSqrtDistTotal(getDistanciaTotal(lineas))).toFixed(4)
+
+
+const Utils = {
+    readTextFile,
+    parseGsi,
+    getDistanciaTotal,
+    getTolerancia,
+    getErrorDeCierre,
+    getErrorKm
+};
 
 
 export default Utils;
