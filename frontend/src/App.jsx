@@ -5,7 +5,8 @@ import FormGsi from './components/FormGsi'
 import Notification from './components/Notification'
 import Utils from './services/utilsGsi'
 import Table from './components/Table'
-import CardsGroup from "./components/CardsGsi.jsx";
+import CardsGroup from "./components/CardsGsi.jsx"
+import Accordion from "./components/Accordion.jsx"
 
 
 const NavBar = ({handleHome, handleEstadillos}) => {
@@ -26,7 +27,7 @@ const NavBar = ({handleHome, handleEstadillos}) => {
                             </li>
                         </ul>
                         <button type="button" className='btn btn-secondary'>
-                            <a href="https://metrolima.acpofiteco.com/" className='nav-link text-white-50 d-inline'
+                            <a href={import.meta.env.VITE_URL_TD} className='nav-link text-white-50 d-inline'
                                target='_blank' rel="noreferrer">Tunneldata</a>
                         </button>
                     </div>
@@ -49,6 +50,8 @@ const App = () => {
     const [notification, setNotification] = useState({message: undefined, type: undefined})
     const [file, setFile] = useState(null)
     const [gsi, setGsi] = useState(null)
+    const [showListas, setShowListas] = useState(false)
+    const [listas, setListas] = useState([])
 
     const handleHomeClick = (event) => {
         event.preventDefault()
@@ -57,12 +60,28 @@ const App = () => {
         setNotification({message: undefined, type: undefined})
         setShowForm(true)
         setShowGsi(false)
+        setShowListas(false)
     }
 
     const handleEstadillosClick = (event) => {
         event.preventDefault()
-        console.log('Estadillos');
-        // TODO: Construir Estadillos
+
+        setNotification({message: undefined, type: undefined})
+        setShowForm(false)
+        setShowGsi(false)
+        setShowListas(true)
+
+        Utils.getListasEstadillos()
+          .then((data) => {
+              console.log(data)
+              setListas(data)
+          })
+          .catch((error) => {
+              console.log(error)
+              setNotification({
+                  message: error.message, type: 'danger'
+              })
+          })
     }
 
     const onFileChange = (event) => {
@@ -83,7 +102,7 @@ const App = () => {
 
     const handleSubmitFile = (date, time) => {
         setNotification({message: undefined, type: undefined})
-        // TODO: Construir GSI
+
         Utils.readTextFile(file)
             .then((data) => {
                 const gsi = Utils.parseGsi(data, date, time)
@@ -92,6 +111,7 @@ const App = () => {
                     itinerario.tolerancia = Utils.getTolerancia(itinerario.lineas)
                     itinerario.error_cierre = Utils.getErrorDeCierre(itinerario.lineas)
                     itinerario.error_km = Utils.getErrorKm(itinerario.lineas)
+                    itinerario.matrixes = Utils.getMatrixes(itinerario.lineas, true, [itinerario.lineas[0].nom_campo])
                     itinerario.cards = [
                         {
                             header: 'Distancia Total',
@@ -124,8 +144,6 @@ const App = () => {
                 setShowForm(false)
                 setShowCards(true)
                 setShowGsi(true)
-
-                // TODO: Construir cards
             })
             .catch((error) => {
                 console.log(error)
@@ -137,7 +155,7 @@ const App = () => {
     }
 
     useEffect(() => {
-        console.log(gsi);
+        console.log(gsi)
     }, [gsi])
 
     return (
@@ -155,6 +173,7 @@ const App = () => {
                         lines={itinerario.lineas}/>
                 </div>
             )) : null}
+            {showListas ? <Accordion items={listas} /> : null}
         </div>
     )
 }
