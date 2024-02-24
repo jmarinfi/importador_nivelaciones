@@ -1,7 +1,7 @@
 import { matrix } from 'mathjs'
 
 
-const REGEX_GSI = /([0-9]{2}[0-9.])([0-9.]{3})([+-])([^\s]{8,16})\s/g;
+const REGEX_GSI = /([0-9]{2}[0-9.])([0-9.]{3})([+-])([^\s]{8,16})\s/g
 const WI_CONSTANTS = {
   'NEW_ITINERARY': '410',
   'NEW_LINE': '110',
@@ -15,142 +15,142 @@ const WI_CONSTANTS = {
   'MEDIANA': '392',
   'BALANCE': '573',
   'DIST_TOTAL': '574'
-};
+}
 
 
 // Método para leer un archivo de texto
 const readTextFile = (file) => {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsText(file);
-  });
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsText(file)
+  })
 }
 
 const getMetodo = (data) => {
   switch (data) {
-    case '1':
-      return 'EF';
-    case '2':
-      return 'EFFE';
-    case '3':
-      return 'aEF';
-    case '4':
-      return 'aEFFE';
-    case '10':
-      return 'Comprob_y_ajuste';
-    default:
-      return 'Desconocido';
+  case '1':
+    return 'EF'
+  case '2':
+    return 'EFFE'
+  case '3':
+    return 'aEF'
+  case '4':
+    return 'aEFFE'
+  case '10':
+    return 'Comprob_y_ajuste'
+  default:
+    return 'Desconocido'
   }
 }
 
 // Función para formatear las fechas y horas
 export function formatDate(date, time) {
-  const dateObj = new Date(`${date} ${time}`);
-  const day = dateObj.getDate();
-  const month = dateObj.getMonth() + 1;
-  const year = dateObj.getFullYear();
-  const hours = dateObj.getHours();
-  const minutes = dateObj.getMinutes();
-  const seconds = dateObj.getSeconds();
+  const dateObj = new Date(`${date} ${time}`)
+  const day = dateObj.getDate()
+  const month = dateObj.getMonth() + 1
+  const year = dateObj.getFullYear()
+  const hours = dateObj.getHours()
+  const minutes = dateObj.getMinutes()
+  const seconds = dateObj.getSeconds()
 
-  return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+  return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`
 }
 
 // Método para parsear un GSI a partir de un archivo de texto
 const parseGsi = (contentFile, date, time) => {
-  const matches = contentFile.matchAll(REGEX_GSI);
+  const matches = contentFile.matchAll(REGEX_GSI)
   const gsi = {
     fecha: formatDate(date, time),
     itinerarios: []
-  };
-  let numItinerario = 0;
-  let itinerarioActual = null;
-  let lineaActual = null;
-  let dist_acum = 0;
+  }
+  let numItinerario = 0
+  let itinerarioActual = null
+  let lineaActual = null
+  let dist_acum = 0
 
   for (const match of matches) {
-    const wordIndex = match[1].replace(/\.+/, '');
+    const wordIndex = match[1].replace(/\.+/, '')
     // const infCompl = match[2];
-    const signo = match[3];
-    const data = match[4].replace(/[.?]+/, '');
+    const signo = match[3]
+    const data = match[4].replace(/[.?]+/, '')
 
     switch (wordIndex) {
-      case WI_CONSTANTS.NEW_ITINERARY:
-        itinerarioActual = {
-          numItinerario: ++numItinerario,
-          metodo: getMetodo(data),
-          encabezado: ['nom_campo', 'dist_mira', 'cota', 'espalda', 'frente', 'radiado', 'med_rep', 'desv_est', 'mediana', 'balance', 'dist_total', 'dist_acum', 'cota_comp'],
-          lineas: []
+    case WI_CONSTANTS.NEW_ITINERARY:
+      itinerarioActual = {
+        numItinerario: ++numItinerario,
+        metodo: getMetodo(data),
+        encabezado: ['nom_campo', 'dist_mira', 'cota', 'espalda', 'frente', 'radiado', 'med_rep', 'desv_est', 'mediana', 'balance', 'dist_total', 'dist_acum', 'cota_comp'],
+        lineas: []
+      }
+      gsi.itinerarios.push(itinerarioActual)
+      break
+    case WI_CONSTANTS.NEW_LINE:
+      if (lineaActual) {
+        if (itinerarioActual.lineas.length === 1) {
+          dist_acum = 0
         }
-        gsi.itinerarios.push(itinerarioActual);
-        break;
-      case WI_CONSTANTS.NEW_LINE:
-        if (lineaActual) {
-          if (itinerarioActual.lineas.length === 1) {
-            dist_acum = 0;
-          }
-          if (lineaActual.dist_mira && !lineaActual.radiado) {
-            dist_acum += lineaActual.dist_mira;
-            lineaActual.dist_acum = dist_acum;
-          } else {
-            lineaActual.dist_acum = dist_acum;
-          }
+        if (lineaActual.dist_mira && !lineaActual.radiado) {
+          dist_acum += lineaActual.dist_mira
+          lineaActual.dist_acum = dist_acum
+        } else {
+          lineaActual.dist_acum = dist_acum
         }
-        lineaActual = itinerarioActual.encabezado.reduce((obj, clave) => {
-          obj[clave] = null
-          return obj
-        }, {})
+      }
+      lineaActual = itinerarioActual.encabezado.reduce((obj, clave) => {
+        obj[clave] = null
+        return obj
+      }, {})
 
-        lineaActual.nom_campo = data.replace(/^0+/, '')
-        itinerarioActual.lineas.push(lineaActual);
-        break;
-      case WI_CONSTANTS.DIST_MIRA:
-        lineaActual.dist_mira = parseFloat(signo + data) / 100000;
-        break;
-      case WI_CONSTANTS.COTA:
-        lineaActual.cota = parseFloat(signo + data) / 100000;
-        break;
-      case WI_CONSTANTS.ESPALDA:
-        lineaActual.espalda = parseFloat(signo + data) / 100000;
-        break;
-      case WI_CONSTANTS.FRENTE:
-        lineaActual.frente = parseFloat(signo + data) / 100000;
-        break;
-      case WI_CONSTANTS.RADIADO:
-        lineaActual.radiado = parseFloat(signo + data) / 100000;
-        break;
-      case WI_CONSTANTS.MED_REP:
-        lineaActual.med_rep = parseInt(signo + data);
-        break;
-      case WI_CONSTANTS.DESV_EST:
-        lineaActual.desv_est = parseInt(signo + data);
-        break;
-      case WI_CONSTANTS.MEDIANA:
-        lineaActual.mediana = parseInt(signo + data);
-        break;
-      case WI_CONSTANTS.BALANCE:
-        lineaActual.balance = parseFloat(signo + data) / 100000;
-        break;
-      case WI_CONSTANTS.DIST_TOTAL:
-        lineaActual.dist_total = parseFloat(signo + data) / 100000;
-        break;
-      default:
-        break;
+      lineaActual.nom_campo = data.replace(/^0+/, '')
+      itinerarioActual.lineas.push(lineaActual)
+      break
+    case WI_CONSTANTS.DIST_MIRA:
+      lineaActual.dist_mira = parseFloat(signo + data) / 100000
+      break
+    case WI_CONSTANTS.COTA:
+      lineaActual.cota = parseFloat(signo + data) / 100000
+      break
+    case WI_CONSTANTS.ESPALDA:
+      lineaActual.espalda = parseFloat(signo + data) / 100000
+      break
+    case WI_CONSTANTS.FRENTE:
+      lineaActual.frente = parseFloat(signo + data) / 100000
+      break
+    case WI_CONSTANTS.RADIADO:
+      lineaActual.radiado = parseFloat(signo + data) / 100000
+      break
+    case WI_CONSTANTS.MED_REP:
+      lineaActual.med_rep = parseInt(signo + data)
+      break
+    case WI_CONSTANTS.DESV_EST:
+      lineaActual.desv_est = parseInt(signo + data)
+      break
+    case WI_CONSTANTS.MEDIANA:
+      lineaActual.mediana = parseInt(signo + data)
+      break
+    case WI_CONSTANTS.BALANCE:
+      lineaActual.balance = parseFloat(signo + data) / 100000
+      break
+    case WI_CONSTANTS.DIST_TOTAL:
+      lineaActual.dist_total = parseFloat(signo + data) / 100000
+      break
+    default:
+      break
     }
   }
 
   if (lineaActual) {
     if (lineaActual.dist_mira && !lineaActual.radiado) {
-      dist_acum += lineaActual.dist_mira;
-      lineaActual.dist_acum = dist_acum;
+      dist_acum += lineaActual.dist_mira
+      lineaActual.dist_acum = dist_acum
     } else {
-      lineaActual.dist_acum = dist_acum;
+      lineaActual.dist_acum = dist_acum
     }
   }
 
-  return gsi;
+  return gsi
 }
 
 const getSqrtDistTotal = dist => Math.sqrt(dist / 1000)
@@ -194,7 +194,7 @@ const getMatrixes = (lineas, esCerrado, bases) => {
       matrixes.matrixL.push(espaldaActual.espalda - frente)
     }
     return matrixes
-  }, {matrixA: [], matrixL: []})
+  }, { matrixA: [], matrixL: [] })
 
   console.log(matrixes)
 
@@ -205,7 +205,7 @@ const getMatrixes = (lineas, esCerrado, bases) => {
     matrixes.matrixL.push(lineas.find(line => line.nom_campo === base)?.cota)
   })
 
-  return {matrixA: matrix(matrixes.matrixA), matrixL: matrix(matrixes.matrixL)}
+  return { matrixA: matrix(matrixes.matrixA), matrixL: matrix(matrixes.matrixL) }
 }
 
 const getListasEstadillos = async () => {
@@ -240,7 +240,7 @@ const Utils = {
   getListasEstadillos,
   getSensoresLista,
   getPdfEstadillo
-};
+}
 
 
-export default Utils;
+export default Utils

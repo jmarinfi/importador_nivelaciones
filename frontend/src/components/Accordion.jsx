@@ -1,5 +1,5 @@
-import PropTypes from "prop-types"
-import Utils from "../services/utilsGsi.js"
+import PropTypes from 'prop-types'
+import Utils from '../services/utilsGsi.js'
 
 const Item = ({ tramo, items }) => {
   const handleOnClickLista = (item) => {
@@ -18,7 +18,7 @@ const Item = ({ tramo, items }) => {
           {tramo}
         </button>
       </h2>
-      <div id={`collapse${tramo}`.replace(' ', '')} className={'accordion-collapse collapse'} aria-labelledby={`heading${tramo}`.replace(' ', '')} data-bs-parent={`#accordionListas`}>
+      <div id={`collapse${tramo}`.replace(' ', '')} className={'accordion-collapse collapse'} aria-labelledby={`heading${tramo}`.replace(' ', '')} data-bs-parent={'#accordionListas'}>
         <div className={'accordion-body'}>
           <ul className={'list-group'}>
             {items.map((item, index) => {
