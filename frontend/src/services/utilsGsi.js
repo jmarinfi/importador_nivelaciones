@@ -1,4 +1,5 @@
 import { matrix } from 'mathjs'
+import { jsPDF } from 'jspdf'
 
 
 const REGEX_GSI = /([0-9]{2}[0-9.])([0-9.]{3})([+-])([^\s]{8,16})\s/g
@@ -224,10 +225,6 @@ const getSensoresLista = async (idLista) => {
   return response.json()
 }
 
-const getPdfEstadillo = async (lista) => {
-  console.log(lista)
-}
-
 
 const Utils = {
   readTextFile,
@@ -239,7 +236,6 @@ const Utils = {
   getMatrixes,
   getListasEstadillos,
   getSensoresLista,
-  getPdfEstadillo
 }
 
 

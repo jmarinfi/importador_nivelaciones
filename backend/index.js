@@ -6,6 +6,7 @@ const app = express()
 const port = process.env.PORT || 3005
 
 app.use(cors())
+app.use(express.static('public'))
 
 const connection = require('./utils/db-metrolima')
 

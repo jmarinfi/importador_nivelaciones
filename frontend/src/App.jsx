@@ -1,47 +1,13 @@
 import { useState, useEffect } from 'react'
 import './bootstrap.css'
-import PropTypes from 'prop-types'
+import NavBar from './components/NavBar.jsx'
 import FormGsi from './components/FormGsi'
 import Notification from './components/Notification'
 import Utils from './services/utilsGsi'
 import Table from './components/Table'
 import CardsGroup from './components/CardsGsi.jsx'
 import Accordion from './components/Accordion.jsx'
-
-
-const NavBar = ({ handleHome, handleEstadillos }) => {
-  return (
-    <header>
-      <nav className='navbar navbar-expand-lg bg-primary' data-bs-theme="dark">
-        <div className='container-fluid'>
-          <a href='' className='navbar-brand' onClick={handleHome}>Inicio</a>
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse"
-            data-bs-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false"
-            aria-label="Toggle navigation">
-            <span className="navbar-toggler-icon"></span>
-          </button>
-          <div className='collapse navbar-collapse' id='navbarColor01'>
-            <ul className='navbar-nav me-auto'>
-              <li className='nav-item'>
-                <a href="" className='nav-link' onClick={handleEstadillos}>Estadillos</a>
-              </li>
-            </ul>
-            <button type="button" className='btn btn-secondary'>
-              <a href={import.meta.env.VITE_URL_TD} className='nav-link text-white-50 d-inline'
-                target='_blank' rel="noreferrer">Tunneldata</a>
-            </button>
-          </div>
-        </div>
-      </nav>
-    </header>
-  )
-}
-
-NavBar.propTypes = {
-  handleHome: PropTypes.func.isRequired,
-  handleEstadillos: PropTypes.func.isRequired
-}
-
+import ButtonsGroup from './components/ButtonsGroup.jsx'
 
 const App = () => {
   const [showForm, setShowForm] = useState(true)
@@ -52,6 +18,8 @@ const App = () => {
   const [gsi, setGsi] = useState(null)
   const [showListas, setShowListas] = useState(false)
   const [listas, setListas] = useState([])
+  const [showReport, setShowReport] = useState(false)
+  const [report, setReport] = useState(null)
 
   const handleHomeClick = (event) => {
     event.preventDefault()
@@ -171,6 +139,9 @@ const App = () => {
             key={`itinerario${itinerario.numItinerario}_gsi`}
             header={itinerario.encabezado}
             lines={itinerario.lineas}/>
+          <ButtonsGroup buttons={[
+            { text: 'Generar Reporte', classes: 'btn btn-lg btn-success', eventOnClick: () => console.log('Generar Reporte') }
+          ]} />
         </div>
       )) : null}
       {showListas ? <Accordion items={listas} /> : null}

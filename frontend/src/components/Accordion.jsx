@@ -1,12 +1,16 @@
 import PropTypes from 'prop-types'
 import Utils from '../services/utilsGsi.js'
+import Estadillo from './Estadillo.jsx'
+import { useState, useEffect, useRef } from 'react'
+import { pdf, PDFViewer } from '@react-pdf/renderer'
 
-const Item = ({ tramo, items }) => {
+const Item = ({ tramo, items, handleEstadilloState }) => {
+
   const handleOnClickLista = (item) => {
-    console.log(item)
     Utils.getSensoresLista(item.ID_LISTA)
       .then(sensores => {
-        Utils.getPdfEstadillo(sensores)
+        console.log('sensores', sensores)
+        handleEstadilloState({ lista: item, sensores: sensores })
       })
       .catch(error => console.log(error))
   }
@@ -41,10 +45,27 @@ Item.propTypes = {
 }
 
 const Accordion = ({ items }) => {
+  const [estadillo, setEstadillo] = useState(null)
+
   const tramos = [...new Set(items.map((item) => item.NOM_RIO))]
+
+  const handleEstadilloState = (estadillo) => {
+    setEstadillo(estadillo)
+  }
+
+  useEffect(() => {
+    console.log('estadillo', estadillo)
+  }, [estadillo])
+
   return (
-    <div className={'accordion container mt-3'} id={'accordionListas'}>
-      {tramos.map((tramo, index) => <Item key={ `${tramo}-${index}` } tramo={tramo} items={items.filter(item => item.NOM_RIO === tramo)} />)}
+    <div>
+      <div className={'container'}>
+        {estadillo && <Estadillo estadillo={estadillo} />}
+      </div>
+      <div className={'accordion container mt-3'} id={'accordionListas'}>
+        {tramos.map((tramo, index) => <Item key={`${tramo}-${index}`} tramo={tramo}
+          items={items.filter(item => item.NOM_RIO === tramo)} handleEstadilloState={handleEstadilloState} />)}
+      </div>
     </div>
   )
 }
