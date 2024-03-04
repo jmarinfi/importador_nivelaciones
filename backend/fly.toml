@@ -9,11 +9,6 @@ primary_region = 'mia'
 [build]
 
 [env]
-  MYSQL_HOST = "metrolima.acpofiteco.com"
-  MYSQL_PORT = 9010
-  MYSQL_USER = "excel"
-  MYSQL_PASSWORD = "2103"
-  MYSQL_DATABASE = "SIGAP"
   PORT = "3005"
 
 [processes]
