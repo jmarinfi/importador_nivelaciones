@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react'
-import { Page, Text, View, Document, StyleSheet, PDFViewer, Image, Font } from '@react-pdf/renderer'
+import {Page, Text, View, Document, StyleSheet, PDFViewer, Image, Font, PDFDownloadLink, pdf} from '@react-pdf/renderer'
 import { PDFTableBases, PDFTableSensores } from './PDFTable.jsx'
 
 const Estadillo = ({ estadillo }) => {
@@ -43,30 +43,43 @@ const Estadillo = ({ estadillo }) => {
     </>
   ) : <Text style={{ fontFamily: 'Helvetica', fontSize: 10, margin: 2 }}>No hay sensores</Text>
 
+  const pdfDocument = (
+    <Document>
+      <Page size={'A4'} style={styles.page}>
+        <View style={{ margin: 2 }} fixed={true}>
+          <Text style={{
+            fontSize: 6,
+          }} render={({ pageNumber, totalPages }) => (
+            `página ${pageNumber} de ${totalPages}`
+          )}></Text>
+          <Text style={{
+            flex: 1,
+            fontSize: 6,
+          }}>Fecha de creación: {(new Date()).toLocaleDateString()}</Text>
+        </View>
+        <View style={styles.header} fixed={true}>
+          <Text style={styles.headerText}>{`Estadillo de la lista: ${estadillo.lista.NOM_LISTA}`}</Text>
+          <Image src={`${import.meta.env.VITE_URL_BASE_BACKEND}/ofitecoLogo.png`} style={styles.headerImage}></Image>
+        </View>
+        {tableBases}
+        {tableSensores}
+      </Page>
+    </Document>
+  )
+
+  const fechaActual = (new Date()).toLocaleDateString().replaceAll('/', '_')
+  const fileName = `estadillo_${estadillo.lista.NOM_LISTA}_${fechaActual}.pdf`
+
   return (
-    <PDFViewer style={styles.viewer}>
-      <Document>
-        <Page size={'A4'} style={styles.page}>
-          <View style={{ margin: 2 }} fixed={true}>
-            <Text style={{
-              fontSize: 6,
-            }} render={({ pageNumber, totalPages }) => (
-              `página ${pageNumber} de ${totalPages}`
-            )}></Text>
-            <Text style={{
-              flex: 1,
-              fontSize: 6,
-            }}>Fecha de creación: {(new Date()).toLocaleDateString()}</Text>
-          </View>
-          <View style={styles.header} fixed={true}>
-            <Text style={styles.headerText}>{`Estadillo de la lista: ${estadillo.lista.NOM_LISTA}`}</Text>
-            <Image src={`${import.meta.env.VITE_URL_BASE_BACKEND}/ofitecoLogo.png`} style={styles.headerImage}></Image>
-          </View>
-          {tableBases}
-          {tableSensores}
-        </Page>
-      </Document>
-    </PDFViewer>
+    <>
+      <PDFDownloadLink document={pdfDocument} fileName={fileName} type={'button'} className={'btn btn-primary btn-sm mt-3'}>
+        {({ blob, url, loading, error }) => (loading ? 'Cargando documento...' : 'Descargar documento')}
+      </PDFDownloadLink>
+      <PDFViewer style={styles.viewer}>
+        {pdfDocument}
+      </PDFViewer>
+    </>
+
   )
 }
 
