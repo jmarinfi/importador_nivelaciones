@@ -1,7 +1,7 @@
 import { matrix } from 'mathjs'
 
-const base_url_dev = 'http://localhost:3005'
-const base_url_prod = ''
+const base_url_dev = 'http://localhost:3005/api'
+const base_url_prod = '/api'
 
 const REGEX_GSI = /([0-9]{2}[0-9.])([0-9.]{3})([+-])([^\s]{8,16})\s/g
 const WI_CONSTANTS = {
