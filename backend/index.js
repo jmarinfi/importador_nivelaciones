@@ -7,12 +7,13 @@ const port = process.env.PORT || 3005
 
 app.use(cors())
 app.use(express.static('public'))
+app.use(express.static('dist'))
 
 const connection = require('./utils/db-metrolima')
 
 
 app.get('/', (req, res) => {
-    res.send('Hello World!')
+    res.send('Hello World! 1')
 })
 
 app.get('/listas', (req, res) => {

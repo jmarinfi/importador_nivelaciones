@@ -17,5 +17,9 @@ jobs:
         run: cd ./backend && npm install
       - name: Install frontend dependencies
         run: cd ./frontend && npm install
-      - name: Check frontend style
-        run: cd ./frontend && npm run lint
+      - name: Build frontend
+        run: cd ./backend && npm run build:ui
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

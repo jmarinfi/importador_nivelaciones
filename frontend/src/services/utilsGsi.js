@@ -1,6 +1,7 @@
 import { matrix } from 'mathjs'
-import { jsPDF } from 'jspdf'
 
+const base_url_dev = 'http://localhost:3005'
+const base_url_prod = ''
 
 const REGEX_GSI = /([0-9]{2}[0-9.])([0-9.]{3})([+-])([^\s]{8,16})\s/g
 const WI_CONSTANTS = {
@@ -210,7 +211,7 @@ const getMatrixes = (lineas, esCerrado, bases) => {
 }
 
 const getListasEstadillos = async () => {
-  const response = await fetch(`${import.meta.env.VITE_URL_BASE_BACKEND}/listas`)
+  const response = await fetch(`${base_url_prod}/listas`)
   if (!response.ok) {
     throw new Error('Error al obtener las listas')
   }
@@ -218,7 +219,7 @@ const getListasEstadillos = async () => {
 }
 
 const getSensoresLista = async (idLista) => {
-  const response = await fetch(`${import.meta.env.VITE_URL_BASE_BACKEND}/sensores-lista/${idLista}`)
+  const response = await fetch(`${base_url_prod}/sensores-lista/${idLista}`)
   if (!response.ok) {
     throw new Error('Error al obtener los sensores de la lista')
   }
