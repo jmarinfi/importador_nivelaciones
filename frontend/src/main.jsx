@@ -1,11 +1,9 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import {
-  createBrowserRouter,
-  RouterProvider,
-} from 'react-router-dom'
+import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 
-import Root, { action as rootAction } from './routes/root'
+import { GsiProvider } from './components/GsiContext'
+import Root from './routes/root'
 import ErrorPage from './error-page'
 import Estadillos, { loader as estadillosLoader } from './routes/estadillos'
 import EstadillosLista, { loader as estadillosListaLoader } from './routes/estadillos_lista'
@@ -32,7 +30,6 @@ const router = createBrowserRouter([
       {
         path: "gsi",
         element: <Gsi />,
-        action: rootAction,
       }
     ],
   },
@@ -40,6 +37,8 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <GsiProvider>
+      <RouterProvider router={router} />
+    </GsiProvider>
   </React.StrictMode>,
 )
