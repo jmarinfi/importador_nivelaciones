@@ -38,3 +38,7 @@
     --bs-btn-active-bg: #ff6620;
     --bs-btn-active-border-color: #ff6620;
 }
+
+.form-control {
+    min-width: 115px;
+}
