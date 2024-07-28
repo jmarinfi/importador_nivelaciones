@@ -2,6 +2,7 @@ require('dotenv').config()
 
 const express = require('express')
 const cors = require('cors')
+const path = require('path')
 const app = express()
 const port = process.env.PORT || 3005
 
@@ -17,7 +18,7 @@ app.get('/', (req, res) => {
 })
 
 app.get('/api/listas', (req, res) => {
-    connection.query('SELECT L.ID_LISTA, L.NOM_LISTA, L.DESCRIPCION, L.ID_RIO, R.NOM_RIO, P.NOM_PRESA FROM LISTAS L JOIN PRESA P ON L.ID_PRESA = P.ID_PRESA JOIN RIO R ON R.ID_RIO = L.ID_RIO WHERE L.ID_TECLECT = 35 ORDER BY P.ID_RIO, P.ORDEN;',
+    connection.query('SELECT L.ID_LISTA, L.NOM_LISTA, L.DESCRIPCION, L.ID_RIO, R.NOM_RIO FROM LISTAS L JOIN RIO R ON R.ID_RIO = L.ID_RIO WHERE L.ID_TECLECT = 35 ORDER BY R.ID_RIO, L.NOM_LISTA;',
       (err, rows, fields) => {
         if (err) throw err
 
@@ -34,6 +35,22 @@ app.get('/api/sensores-lista/:idLista', (req, res) => {
 
         res.json(rows)
       })
+})
+
+app.get('/api/nombre-lista/:idLista', (req, res) => {
+  const { idLista } = req.params
+  connection.query('SELECT L.NOM_LISTA FROM LISTAS AS L WHERE L.ID_LISTA = ?;',
+    [idLista],
+    (err, rows, fields) => {
+      if (err) throw err
+
+      res.json(rows)
+    }
+  )
+})
+
+app.get('*', (req, res) => {
+  res.sendFile(path.resolve(__dirname, 'dist', 'index.html'))
 })
 
 

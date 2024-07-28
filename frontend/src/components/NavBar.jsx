@@ -1,36 +1,33 @@
-import PropTypes from 'prop-types'
+import { NavLink } from 'react-router-dom'
 
-const NavBar = ({ handleHome, handleEstadillos }) => {
+const NavBar = () => {
   return (
-    <header>
-      <nav className='navbar navbar-expand-lg bg-primary' data-bs-theme="dark">
-        <div className='container-fluid'>
-          <a href='' className='navbar-brand' onClick={handleHome}>Inicio</a>
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse"
-            data-bs-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false"
-            aria-label="Toggle navigation">
-            <span className="navbar-toggler-icon"></span>
+    <nav className="navbar navbar-expand-md mb-3" style={{ backgroundColor: "#ff6620" }}>
+      <div className="container-fluid">
+        <a className="navbar-brand" style={{ width: "120px" }} href="/">
+          <img src="/ofitecoLogo.png" className="rounded w-100"></img>
+        </a>
+        <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span className="navbar-toggler-icon"></span>
+        </button>
+        <div className="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul className="navbar-nav me-auto">
+            <li className="nav-item">
+              <NavLink to={'/'} className={"nav-link fw-bold"}>Inicio</NavLink>
+            </li>
+            <li className="nav-item">
+              <NavLink to={'/estadillos'} className={"nav-link fw-bold"}>Estadillos</NavLink>
+            </li>
+          </ul>
+          <button type='button' className='btn btn-light'>
+            <a href="https://metrolima.acpofiteco.com/" className='nav-link fw-bold'
+              target='_blank' rel="noreferrer">Tunneldata</a>
           </button>
-          <div className='collapse navbar-collapse' id='navbarColor01'>
-            <ul className='navbar-nav me-auto'>
-              <li className='nav-item'>
-                <a href="" className='nav-link' onClick={handleEstadillos}>Estadillos</a>
-              </li>
-            </ul>
-            <button type="button" className='btn btn-secondary'>
-              <a href={import.meta.env.VITE_URL_TD} className='nav-link text-white-50 d-inline'
-                target='_blank' rel="noreferrer">Tunneldata</a>
-            </button>
-          </div>
         </div>
-      </nav>
-    </header>
-  )
-}
+      </div>
 
-NavBar.propTypes = {
-  handleHome: PropTypes.func.isRequired,
-  handleEstadillos: PropTypes.func.isRequired
+    </nav>
+  )
 }
 
 export default NavBar

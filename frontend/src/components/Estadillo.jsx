@@ -2,7 +2,7 @@ import React, { Fragment } from 'react'
 import {Page, Text, View, Document, StyleSheet, PDFViewer, Image, Font, PDFDownloadLink, pdf} from '@react-pdf/renderer'
 import { PDFTableBases, PDFTableSensores } from './PDFTable.jsx'
 
-const Estadillo = ({ estadillo }) => {
+const Estadillo = ({ sensores, lista }) => {
   const styles = StyleSheet.create({
     viewer: {
       width: '100%',
@@ -28,7 +28,7 @@ const Estadillo = ({ estadillo }) => {
     }
   })
 
-  const bases = estadillo.sensores.filter(sensor => sensor.ID_SISTEMA === 75)
+  const bases = sensores.filter(sensor => sensor.ID_SISTEMA === 75)
   const tableBases = bases.length > 0 ? (
     <>
       <Text style={{ fontFamily: 'Helvetica', fontSize: 10, margin: 2 }}>Bases:</Text>
@@ -36,10 +36,10 @@ const Estadillo = ({ estadillo }) => {
     </>
   ) : <Text style={{ fontFamily: 'Helvetica', fontSize: 10, margin: 2 }}>No hay bases</Text>
 
-  const tableSensores = estadillo.sensores.length > 0 ? (
+  const tableSensores = sensores.length > 0 ? (
     <>
       <Text style={{ fontFamily: 'Helvetica', fontSize: 10, margin: 2 }}>Sensores:</Text>
-      <PDFTableSensores filas={estadillo.sensores} />
+      <PDFTableSensores filas={sensores} />
     </>
   ) : <Text style={{ fontFamily: 'Helvetica', fontSize: 10, margin: 2 }}>No hay sensores</Text>
 
@@ -58,8 +58,8 @@ const Estadillo = ({ estadillo }) => {
           }}>Fecha de creación: {(new Date()).toLocaleDateString()}</Text>
         </View>
         <View style={styles.header} fixed={true}>
-          <Text style={styles.headerText}>{`Estadillo de la lista: ${estadillo.lista.NOM_LISTA}`}</Text>
-          <Image src={`${import.meta.env.VITE_URL_BASE_BACKEND}/ofitecoLogo.png`} style={styles.headerImage}></Image>
+          <Text style={styles.headerText}>{`Estadillo de la lista: ${lista}`}</Text>
+          <Image src={`/ofitecoLogo.png`} style={styles.headerImage}></Image>
         </View>
         {tableBases}
         {tableSensores}
@@ -68,7 +68,7 @@ const Estadillo = ({ estadillo }) => {
   )
 
   const fechaActual = (new Date()).toLocaleDateString().replaceAll('/', '_')
-  const fileName = `estadillo_${estadillo.lista.NOM_LISTA}_${fechaActual}.pdf`
+  const fileName = `estadillo_${lista}_${fechaActual}.pdf`
 
   return (
     <>
