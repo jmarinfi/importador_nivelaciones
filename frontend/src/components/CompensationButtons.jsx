@@ -1,5 +1,5 @@
 
-const CompensationButtons = ({ itinerario }) => {
+const CompensationButtons = ({ itinerario, onHandleClick }) => {
   return (
     <>
       <h3>Elegir método de compensación</h3>
@@ -7,27 +7,30 @@ const CompensationButtons = ({ itinerario }) => {
         <input
           type='radio'
           className='btn-check'
-          name={`btnradio-${itinerario.numItinerario}`}
-          id={`simple-comp-${itinerario.numItinerario}`}
+          name={`btnradio-${itinerario}`}
+          id={`simple-comp-${itinerario}`}
           autoComplete='off'
+          onClick={onHandleClick}
         />
-        <label className='btn btn-outline-primary' htmlFor={`simple-comp-${itinerario.numItinerario}`}>Anillo cerrado simple</label>
+        <label className='btn btn-outline-primary' htmlFor={`simple-comp-${itinerario}`}>Anillo cerrado simple</label>
         <input
           type='radio'
           className='btn-check'
-          name={`btnradio-${itinerario.numItinerario}`}
-          id={`matrix-comp-${itinerario.numItinerario}`}
+          name={`btnradio-${itinerario}`}
+          id={`matrix-comp-${itinerario}`}
           autoComplete='off'
+          onClick={onHandleClick}
         />
-        <label className='btn btn-outline-primary' htmlFor={`matrix-comp-${itinerario.numItinerario}`}>Ajuste por mínimos cuadrados</label>
+        <label className='btn btn-outline-primary' htmlFor={`matrix-comp-${itinerario}`}>Ajuste por mínimos cuadrados</label>
         <input
           type='radio'
           className='btn-check'
-          name={`btnradio-${itinerario.numItinerario}`}
-          id={`none-comp-${itinerario.numItinerario}`}
+          name={`btnradio-${itinerario}`}
+          id={`none-comp-${itinerario}`}
           autoComplete='off'
+          onClick={onHandleClick}
         />
-        <label className='btn btn-outline-primary' htmlFor={`none-comp-${itinerario.numItinerario}`}>Sin compensar</label>
+        <label className='btn btn-outline-primary' htmlFor={`none-comp-${itinerario}`}>Sin compensar</label>
       </div>
     </>
   )
