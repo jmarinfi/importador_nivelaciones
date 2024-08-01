@@ -30,6 +30,10 @@ const router = createBrowserRouter([
       {
         path: "gsi",
         element: <Gsi />,
+      },
+      {
+        path: "reporte",
+        element: <p className='container'>Reporte pendiente de implementar</p>
       }
     ],
   },

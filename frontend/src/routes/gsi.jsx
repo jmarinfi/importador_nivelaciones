@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 
 import { useGsi } from '../components/GsiContext'
 import CardsGsi from '../components/CardsGsi'
@@ -8,21 +8,13 @@ import Table from '../components/Table'
 
 const Gsi = () => {
   const navigate = useNavigate()
-  const { gsiData, setGsiData, gsiCompensatedData, setGsiCompensatedData } = useGsi()
+  const { gsiData, setGsiData } = useGsi()
 
   useEffect(() => {
     if (!gsiData) {
       navigate('/')
     }
   }, [gsiData, navigate])
-
-  const renderTableCompensated = (numItinerario) => {
-    const itinerario = gsiCompensatedData.itinerarios.filter((itinerario) => itinerario.numItinerario === Number(numItinerario))
-    console.log(numItinerario, itinerario)
-    return (
-      <Table header={itinerario.encabezado} lines={itinerario.lineas} />
-    )
-  }
 
   const handleDescartaItinerario = (event) => {
     const numItinerario = Number(event.target.id)
@@ -31,22 +23,12 @@ const Gsi = () => {
     const filterItinearios = (data) =>
       data.itinerarios.filter((itinerario) => itinerario.numItinerario !== numItinerario)
 
-    if (gsiData) {
-      const newGsiData = {
-        ...gsiData,
-        itinerarios: filterItinearios(gsiData)
-      }
-      console.log(newGsiData)
-      setGsiData(newGsiData)
+    const newGsiData = {
+      ...gsiData,
+      itinerarios: filterItinearios(gsiData)
     }
-    if (gsiCompensatedData) {
-      const newGsiCompensatedData = {
-        ...gsiCompensatedData,
-        itinerarios: filterItinearios(gsiCompensatedData)
-      }
-      console.log(newGsiCompensatedData)
-      setGsiCompensatedData(newGsiCompensatedData)
-    }
+    console.log(newGsiData)
+    setGsiData(newGsiData)
   }
 
   const handleGsiChange = (newLines, numItinerario) => {
@@ -63,49 +45,61 @@ const Gsi = () => {
   }
 
   const handleCompensation = (event) => {
-    console.log(event.target.id)
     const numItinerario = Number(event.target.id.slice(-1))
-    const itinerario = gsiData.itinerarios.filter((it) => it.numItinerario === numItinerario)[0]
-    console.log(itinerario)
-    const compensatedItinerario = {
-      ...itinerario,
-      encabezado: [...itinerario.encabezado, 'cota_compensada']
-    }
-    console.log(compensatedItinerario)
+    console.log(numItinerario)
 
     if (event.target.id.startsWith('simple-comp')) {
-
-      compensatedItinerario.lineas = itinerario.lineas.map((linea) => {
-        return {
-          ...linea,
-          cota_compensada: linea.cota ? linea.cota - (linea.dist_acum * (itinerario.error_cierre / 1000) / itinerario.dist_total) : null
+      console.log('compensación simple')
+      const itinerariosComp = gsiData.itinerarios.map((itinerario) => {
+        if (itinerario.numItinerario === numItinerario) {
+          if (!itinerario.encabezado.includes('cota_comp')) {
+            itinerario.encabezado = [...itinerario.encabezado, 'cota_comp']
+          }
+          itinerario.metodo_comp = 'Anillo simple'
+          itinerario.lineas = itinerario.lineas.map((linea) => {
+            linea.cota_comp = linea.cota ? linea.cota - (linea.dist_acum * (itinerario.error_cierre / 1000) / itinerario.dist_total) : null
+            return linea
+          })
+          return itinerario
         }
+        return itinerario
       })
-      compensatedItinerario.tipo_compensacion = 'simple-comp'
-      console.log(compensatedItinerario)
-
-      if (gsiCompensatedData) {
-        const newGsiCompensatedData = {
-          ...gsiCompensatedData,
-          itinerarios: gsiCompensatedData.itinerarios.reduce((accumulator, currentValue) => {
-            if (compensatedItinerario.numItinerario !== currentValue.numItinerario) {
-              accumulator.push(currentValue)
-            }
-            return accumulator
-          }, [])
-        }
-        newGsiCompensatedData.itinerarios.push(compensatedItinerario)
-        console.log(newGsiCompensatedData)
-        setGsiCompensatedData(newGsiCompensatedData)
-      } else {
-        const newGsiCompensatedData = {
-          ...gsiData,
-          itinerarios: [compensatedItinerario]
-        }
-        console.log(newGsiCompensatedData)
-        setGsiCompensatedData(newGsiCompensatedData)
+      console.log(itinerariosComp)
+      const newGsi = {
+        ...gsiData,
+        itinerarios: itinerariosComp
       }
+      setGsiData(newGsi)
     }
+
+    if (event.target.id.startsWith('none-comp')) {
+      console.log('Sin compensación')
+      const itinerariosComp = gsiData.itinerarios.map((itinerario) => {
+        if (itinerario.numItinerario === numItinerario) {
+          if (itinerario.encabezado.includes('cota_comp')) {
+            itinerario.encabezado = itinerario.encabezado.filter((item) => item !== 'cota_comp')
+          }
+          itinerario.metodo_comp = 'Sin compensar'
+          itinerario.lineas = itinerario.lineas.map((linea) => {
+            delete linea.cota_comp
+            return linea
+          })
+          return itinerario
+        }
+        return itinerario
+      })
+      console.log(itinerariosComp)
+      const newGsi = {
+        ...gsiData,
+        itinerarios: itinerariosComp
+      }
+      setGsiData(newGsi)
+    }
+  }
+
+  const handleGenerarReporte = (event) => {
+    console.log(event.target.id)
+    navigate('/reporte')
   }
 
   return (
@@ -123,17 +117,16 @@ const Gsi = () => {
             <CardsGsi cards={itinerario.cards} />
             <button type='button' id={itinerario.numItinerario} className='btn btn-primary mb-3' onClick={handleDescartaItinerario}>Descartar itinerario</button>
             <CompensationButtons itinerario={itinerario.numItinerario} onHandleClick={handleCompensation} />
-            {
-              gsiCompensatedData && gsiCompensatedData.itinerarios.filter((it) => it.numItinerario === itinerario.numItinerario)[0]
-                ? <Table
-                  header={gsiCompensatedData.itinerarios.filter((it) => it.numItinerario === itinerario.numItinerario)[0].encabezado}
-                  lines={gsiCompensatedData.itinerarios.filter((it) => it.numItinerario === itinerario.numItinerario)[0].lineas}
-                />
-                : <Table header={itinerario.encabezado} lines={itinerario.lineas} onChangeGsi={(newLines) => handleGsiChange(newLines, itinerario.numItinerario)} />
-            }
+            {'metodo_comp' in itinerario
+              ? <button id={`generar-reporte-${itinerario.numItinerario}`} type='button' className='container btn btn-primary mb-3' onClick={handleGenerarReporte}>Generar reporte del itinerario {itinerario.numItinerario}</button>
+              : null}
+            <Table header={itinerario.encabezado} lines={itinerario.lineas} onChangeGsi={(newLines) => handleGsiChange(newLines, itinerario.numItinerario)} />
           </div>
         )
       })}
+      {gsiData?.itinerarios.every(itinerario => 'metodo_comp' in itinerario) && gsiData.itinerarios.length > 1
+        ? <div className='container'><button id='generar-reporte-todos' type='button' className='container btn btn-primary mb-3' onClick={handleGenerarReporte}>Generar reporte de todos los itinerarios</button></div>
+        : null}
     </>
   )
 }

@@ -4,10 +4,9 @@ const GsiContext = createContext()
 
 export const GsiProvider = ({ children }) => {
   const [gsiData, setGsiData] = useState(null)
-  const [gsiCompensatedData, setGsiCompensatedData] = useState(null)
 
   return (
-    <GsiContext.Provider value={{ gsiData, setGsiData, gsiCompensatedData, setGsiCompensatedData }}>
+    <GsiContext.Provider value={{ gsiData, setGsiData }}>
       {children}
     </GsiContext.Provider>
   )
