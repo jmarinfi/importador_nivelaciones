@@ -7,6 +7,7 @@ import CompensationButtons from '../components/CompensationButtons'
 import Table from '../components/Table'
 
 const Gsi = () => {
+  const [tableCollapsed, setTableCollapsed] = useState(true)
   const navigate = useNavigate()
   const { gsiData, setGsiData } = useGsi()
 
@@ -115,7 +116,15 @@ const Gsi = () => {
           <div key={`itinerario-${itinerario.numItinerario}`} className='container'>
             <h2 className='display-6 mb-3'>{`Itinerario ${itinerario.numItinerario}`}</h2>
             <CardsGsi cards={itinerario.cards} />
-            <button type='button' id={itinerario.numItinerario} className='btn btn-primary mb-3' onClick={handleDescartaItinerario}>Descartar itinerario</button>
+            <div className='d-grid gap-2 col-6 mx-auto mb-3'>
+              <button type='button' id={itinerario.numItinerario} className='btn btn-primary col' onClick={handleDescartaItinerario}>Descartar itinerario</button>
+              <button type='button' className='btn btn-primary col' data-bs-toggle="collapse" data-bs-target={`#tabla-desniveles-${itinerario.numItinerario}`} aria-controls={`tabla-desniveles-${itinerario.numItinerario}`} onClick={() => setTableCollapsed(!tableCollapsed)}>
+                {tableCollapsed ? 'Ver tabla de desniveles': 'Esconder tabla de desniveles'}
+              </button>
+            </div>
+            <div className='collapse' id={`tabla-desniveles-${itinerario.numItinerario}`}>
+              <Table header={Object.keys(itinerario.tabla_desniveles[0])} lines={itinerario.tabla_desniveles} />
+            </div>
             <CompensationButtons itinerario={itinerario.numItinerario} onHandleClick={handleCompensation} />
             {'metodo_comp' in itinerario
               ? <button id={`generar-reporte-${itinerario.numItinerario}`} type='button' className='container btn btn-primary mb-3' onClick={handleGenerarReporte}>Generar reporte del itinerario {itinerario.numItinerario}</button>
