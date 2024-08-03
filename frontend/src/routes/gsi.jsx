@@ -1,22 +1,42 @@
 import { useEffect, useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 import { useGsi } from '../components/GsiContext'
 import CardsGsi from '../components/CardsGsi'
 import CompensationButtons from '../components/CompensationButtons'
 import Table from '../components/Table'
+import GrafoItinerario from '../components/GrafoItinerario'
 
 const Gsi = () => {
-  const [tableCollapsed, setTableCollapsed] = useState(true)
-  const [grafoCollapsed, setGrafoCollapsed] = useState(true)
+  const [visibilityState, setVisibilityState] = useState({})
   const navigate = useNavigate()
   const { gsiData, setGsiData } = useGsi()
 
   useEffect(() => {
     if (!gsiData) {
       navigate('/')
+    } else {
+      const initialVisibility = gsiData.itinerarios.reduce(
+        (acc, itinerario) => {
+          acc[itinerario.numItinerario] = { showTable: false, showGrafo: false }
+          return acc
+        },
+        {}
+      )
+      console.log(initialVisibility)
+      setVisibilityState(initialVisibility)
     }
   }, [gsiData, navigate])
+
+  const toggleVisibility = (itinerarioNum, key) => {
+    setVisibilityState((prevState) => ({
+      ...prevState,
+      [itinerarioNum]: {
+        ...prevState[itinerarioNum],
+        [key]: !prevState[itinerarioNum][key],
+      },
+    }))
+  }
 
   const handleDescartaItinerario = (event) => {
     const numItinerario = Number(event.target.id)
@@ -140,43 +160,39 @@ const Gsi = () => {
               <button
                 type="button"
                 className="btn btn-primary flex-fill"
-                data-bs-toggle="collapse"
-                data-bs-target={`#tabla-desniveles-${itinerario.numItinerario}`}
-                aria-controls={`tabla-desniveles-${itinerario.numItinerario}`}
-                onClick={() => setTableCollapsed(!tableCollapsed)}
+                onClick={() =>
+                  toggleVisibility(itinerario.numItinerario, 'showTable')
+                }
               >
-                {tableCollapsed
-                  ? 'Ver tabla de desniveles'
-                  : 'Esconder tabla de desniveles'}
+                {visibilityState[itinerario.numItinerario]?.showTable
+                  ? 'Esconder tabla de desniveles'
+                  : 'Ver tabla de desniveles'}
               </button>
               <button
                 type="button"
                 className="btn btn-primary flex-fill"
-                data-bs-toggle="collapse"
-                data-bs-target={`#grafo-itinerario-${itinerario.numItinerario}`}
-                aria-controls={`grafo-itinerario-${itinerario.numItinerario}`}
-                onClick={() => setGrafoCollapsed(!grafoCollapsed)}
+                onClick={() =>
+                  toggleVisibility(itinerario.numItinerario, 'showGrafo')
+                }
               >
-                {grafoCollapsed
-                  ? 'Ver grafo del itinerario'
-                  : 'Esconder grafo del itinerario'}
+                {visibilityState[itinerario.numItinerario]?.showGrafo
+                  ? 'Esconder grafo del itinerario'
+                  : 'Ver grafo del itinerario'}
               </button>
             </div>
-            <div
-              className="collapse"
-              id={`tabla-desniveles-${itinerario.numItinerario}`}
-            >
-              <Table
-                header={Object.keys(itinerario.tabla_desniveles[0])}
-                lines={itinerario.tabla_desniveles}
-              />
-            </div>
-            <div
-              className="collapse"
-              id={`grafo-itinerario-${itinerario.numItinerario}`}
-            >
-              <p>Holis</p>
-            </div>
+            {visibilityState[itinerario.numItinerario]?.showTable && (
+              <div className="card card-body mb-3">
+                <Table
+                  header={Object.keys(itinerario.tabla_desniveles[0])}
+                  lines={itinerario.tabla_desniveles}
+                />
+              </div>
+            )}
+
+            {visibilityState[itinerario.numItinerario]?.showGrafo && (
+              <GrafoItinerario lineasDesniveles={itinerario.tabla_desniveles} />
+            )}
+
             <CompensationButtons
               itinerario={itinerario.numItinerario}
               onHandleClick={handleCompensation}
