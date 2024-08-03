@@ -8,6 +8,7 @@ import Table from '../components/Table'
 
 const Gsi = () => {
   const [tableCollapsed, setTableCollapsed] = useState(true)
+  const [grafoCollapsed, setGrafoCollapsed] = useState(true)
   const navigate = useNavigate()
   const { gsiData, setGsiData } = useGsi()
 
@@ -22,11 +23,13 @@ const Gsi = () => {
     console.log(numItinerario)
 
     const filterItinearios = (data) =>
-      data.itinerarios.filter((itinerario) => itinerario.numItinerario !== numItinerario)
+      data.itinerarios.filter(
+        (itinerario) => itinerario.numItinerario !== numItinerario
+      )
 
     const newGsiData = {
       ...gsiData,
-      itinerarios: filterItinearios(gsiData)
+      itinerarios: filterItinearios(gsiData),
     }
     console.log(newGsiData)
     setGsiData(newGsiData)
@@ -39,7 +42,7 @@ const Gsi = () => {
         itinerario.numItinerario === numItinerario
           ? { ...itinerario, lineas: newLines }
           : itinerario
-      )
+      ),
     }
     console.log(newGsiData)
     setGsiData(newGsiData)
@@ -58,7 +61,11 @@ const Gsi = () => {
           }
           itinerario.metodo_comp = 'Anillo simple'
           itinerario.lineas = itinerario.lineas.map((linea) => {
-            linea.cota_comp = linea.cota ? linea.cota - (linea.dist_acum * (itinerario.error_cierre / 1000) / itinerario.dist_total) : null
+            linea.cota_comp = linea.cota
+              ? linea.cota -
+                (linea.dist_acum * (itinerario.error_cierre / 1000)) /
+                  itinerario.dist_total
+              : null
             return linea
           })
           return itinerario
@@ -68,7 +75,7 @@ const Gsi = () => {
       console.log(itinerariosComp)
       const newGsi = {
         ...gsiData,
-        itinerarios: itinerariosComp
+        itinerarios: itinerariosComp,
       }
       setGsiData(newGsi)
     }
@@ -78,7 +85,9 @@ const Gsi = () => {
       const itinerariosComp = gsiData.itinerarios.map((itinerario) => {
         if (itinerario.numItinerario === numItinerario) {
           if (itinerario.encabezado.includes('cota_comp')) {
-            itinerario.encabezado = itinerario.encabezado.filter((item) => item !== 'cota_comp')
+            itinerario.encabezado = itinerario.encabezado.filter(
+              (item) => item !== 'cota_comp'
+            )
           }
           itinerario.metodo_comp = 'Sin compensar'
           itinerario.lineas = itinerario.lineas.map((linea) => {
@@ -92,7 +101,7 @@ const Gsi = () => {
       console.log(itinerariosComp)
       const newGsi = {
         ...gsiData,
-        itinerarios: itinerariosComp
+        itinerarios: itinerariosComp,
       }
       setGsiData(newGsi)
     }
@@ -107,35 +116,105 @@ const Gsi = () => {
     <>
       <h1 className="container display-3 mb-3">Tabla GSI</h1>
       {gsiData?.itinerarios.length === 0 && (
-        <div className='container alert alert-warning'>
+        <div className="container alert alert-warning">
           No hay itinerarios. Vuelve al inicio para importar otro GSI.
         </div>
       )}
       {gsiData?.itinerarios.map((itinerario) => {
         return (
-          <div key={`itinerario-${itinerario.numItinerario}`} className='container'>
-            <h2 className='display-6 mb-3'>{`Itinerario ${itinerario.numItinerario}`}</h2>
+          <div
+            key={`itinerario-${itinerario.numItinerario}`}
+            className="container"
+          >
+            <h2 className="display-6 mb-3">{`Itinerario ${itinerario.numItinerario}`}</h2>
             <CardsGsi cards={itinerario.cards} />
-            <div className='d-grid gap-2 col-6 mx-auto mb-3'>
-              <button type='button' id={itinerario.numItinerario} className='btn btn-primary col' onClick={handleDescartaItinerario}>Descartar itinerario</button>
-              <button type='button' className='btn btn-primary col' data-bs-toggle="collapse" data-bs-target={`#tabla-desniveles-${itinerario.numItinerario}`} aria-controls={`tabla-desniveles-${itinerario.numItinerario}`} onClick={() => setTableCollapsed(!tableCollapsed)}>
-                {tableCollapsed ? 'Ver tabla de desniveles': 'Esconder tabla de desniveles'}
+            <div className="d-flex gap-2 mb-3">
+              <button
+                type="button"
+                id={itinerario.numItinerario}
+                className="btn btn-primary flex-fill"
+                onClick={handleDescartaItinerario}
+              >
+                Descartar itinerario
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary flex-fill"
+                data-bs-toggle="collapse"
+                data-bs-target={`#tabla-desniveles-${itinerario.numItinerario}`}
+                aria-controls={`tabla-desniveles-${itinerario.numItinerario}`}
+                onClick={() => setTableCollapsed(!tableCollapsed)}
+              >
+                {tableCollapsed
+                  ? 'Ver tabla de desniveles'
+                  : 'Esconder tabla de desniveles'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary flex-fill"
+                data-bs-toggle="collapse"
+                data-bs-target={`#grafo-itinerario-${itinerario.numItinerario}`}
+                aria-controls={`grafo-itinerario-${itinerario.numItinerario}`}
+                onClick={() => setGrafoCollapsed(!grafoCollapsed)}
+              >
+                {grafoCollapsed
+                  ? 'Ver grafo del itinerario'
+                  : 'Esconder grafo del itinerario'}
               </button>
             </div>
-            <div className='collapse' id={`tabla-desniveles-${itinerario.numItinerario}`}>
-              <Table header={Object.keys(itinerario.tabla_desniveles[0])} lines={itinerario.tabla_desniveles} />
+            <div
+              className="collapse"
+              id={`tabla-desniveles-${itinerario.numItinerario}`}
+            >
+              <Table
+                header={Object.keys(itinerario.tabla_desniveles[0])}
+                lines={itinerario.tabla_desniveles}
+              />
             </div>
-            <CompensationButtons itinerario={itinerario.numItinerario} onHandleClick={handleCompensation} />
-            {'metodo_comp' in itinerario
-              ? <button id={`generar-reporte-${itinerario.numItinerario}`} type='button' className='container btn btn-primary mb-3' onClick={handleGenerarReporte}>Generar reporte del itinerario {itinerario.numItinerario}</button>
-              : null}
-            <Table header={itinerario.encabezado} lines={itinerario.lineas} onChangeGsi={(newLines) => handleGsiChange(newLines, itinerario.numItinerario)} />
+            <div
+              className="collapse"
+              id={`grafo-itinerario-${itinerario.numItinerario}`}
+            >
+              <p>Holis</p>
+            </div>
+            <CompensationButtons
+              itinerario={itinerario.numItinerario}
+              onHandleClick={handleCompensation}
+            />
+            {'metodo_comp' in itinerario ? (
+              <button
+                id={`generar-reporte-${itinerario.numItinerario}`}
+                type="button"
+                className="container btn btn-primary mb-3"
+                onClick={handleGenerarReporte}
+              >
+                Generar reporte del itinerario {itinerario.numItinerario}
+              </button>
+            ) : null}
+            <Table
+              header={itinerario.encabezado}
+              lines={itinerario.lineas}
+              onChangeGsi={(newLines) =>
+                handleGsiChange(newLines, itinerario.numItinerario)
+              }
+            />
           </div>
         )
       })}
-      {gsiData?.itinerarios.every(itinerario => 'metodo_comp' in itinerario) && gsiData.itinerarios.length > 1
-        ? <div className='container'><button id='generar-reporte-todos' type='button' className='container btn btn-primary mb-3' onClick={handleGenerarReporte}>Generar reporte de todos los itinerarios</button></div>
-        : null}
+      {gsiData?.itinerarios.every(
+        (itinerario) => 'metodo_comp' in itinerario
+      ) && gsiData.itinerarios.length > 1 ? (
+        <div className="container">
+          <button
+            id="generar-reporte-todos"
+            type="button"
+            className="container btn btn-primary mb-3"
+            onClick={handleGenerarReporte}
+          >
+            Generar reporte de todos los itinerarios
+          </button>
+        </div>
+      ) : null}
     </>
   )
 }
