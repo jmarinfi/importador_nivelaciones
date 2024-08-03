@@ -157,7 +157,7 @@ const getErrorDeCierre = (lineas) => {
 
 const getErrorKm = lineas => Math.abs(getErrorDeCierre(lineas) / getSqrtDistTotal(getDistanciaTotal(lineas))).toFixed(4)
 
-const getTablaDesniveles = (lineas) => {
+export const getTablaDesniveles = (lineas) => {
   let currPuntoEspalda = {}
   let currPuntoFrente = {}
   return lineas.reduce((acc, currValue) => {

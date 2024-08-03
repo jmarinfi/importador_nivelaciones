@@ -6,6 +6,7 @@ import CardsGsi from '../components/CardsGsi'
 import CompensationButtons from '../components/CompensationButtons'
 import Table from '../components/Table'
 import GrafoItinerario from '../components/GrafoItinerario'
+import { getTablaDesniveles } from '../services/gsiServices'
 
 const Gsi = () => {
   const [visibilityState, setVisibilityState] = useState({})
@@ -60,7 +61,11 @@ const Gsi = () => {
       ...gsiData,
       itinerarios: gsiData.itinerarios.map((itinerario) =>
         itinerario.numItinerario === numItinerario
-          ? { ...itinerario, lineas: newLines }
+          ? {
+              ...itinerario,
+              lineas: newLines,
+              tabla_desniveles: getTablaDesniveles(newLines),
+            }
           : itinerario
       ),
     }
@@ -190,7 +195,7 @@ const Gsi = () => {
             )}
 
             {visibilityState[itinerario.numItinerario]?.showGrafo && (
-              <GrafoItinerario lineasDesniveles={itinerario.tabla_desniveles} />
+              <GrafoItinerario numItinerario={itinerario.numItinerario} />
             )}
 
             <CompensationButtons

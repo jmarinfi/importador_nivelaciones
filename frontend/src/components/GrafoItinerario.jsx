@@ -1,8 +1,15 @@
 import { useRef, useEffect, useState } from 'react'
 import * as d3 from 'd3'
 
-const GrafoItinerario = ({ lineasDesniveles }) => {
+import { useGsi } from './GsiContext'
+
+const GrafoItinerario = ({ numItinerario }) => {
   const svgRef = useRef(null)
+  const { gsiData } = useGsi()
+
+  const lineasDesniveles = gsiData.itinerarios.filter(
+    (itinerario) => itinerario.numItinerario === numItinerario
+  )[0].tabla_desniveles
 
   useEffect(() => {
     const width = 800
