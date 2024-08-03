@@ -43,14 +43,11 @@ const Gsi = () => {
     const numItinerario = Number(event.target.id)
     console.log(numItinerario)
 
-    const filterItinearios = (data) =>
-      data.itinerarios.filter(
-        (itinerario) => itinerario.numItinerario !== numItinerario
-      )
-
     const newGsiData = {
       ...gsiData,
-      itinerarios: filterItinearios(gsiData),
+      itinerarios: gsiData.itinerarios.filter(
+        (itinerario) => itinerario.numItinerario !== numItinerario
+      ),
     }
     console.log(newGsiData)
     setGsiData(newGsiData)
