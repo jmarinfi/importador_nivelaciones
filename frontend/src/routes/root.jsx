@@ -1,5 +1,4 @@
 import {
-  Outlet,
   useLocation,
   Form,
   useNavigate,
@@ -7,8 +6,8 @@ import {
 } from 'react-router-dom'
 
 import { useGsi } from '../components/GsiContext'
-import NavBar from '../components/NavBar'
 import { getGsi } from '../services/gsiServices'
+import Spinner from '../components/Spinner'
 
 const Root = () => {
   const currentDate = `${new Date().getFullYear()}-${String(
@@ -31,101 +30,93 @@ const Root = () => {
     const formData = new FormData(event.target)
     const data = Object.fromEntries(formData)
     const file = data.formFile
-    if (!file || !(file instanceof File)) {
-      throw new Error('Invalid file input')
-    }
-    if (!file.name.toLowerCase().endsWith('.gsi')) {
-      throw new Error('Archivo no válido')
-    }
-    if (file.size === 0) {
-      throw new Error('Archivo vacío')
-    }
-    const fileContent = await file.text()
-    const gsi = await getGsi(fileContent, data.dateInput, data.timeInput)
-    console.log(gsi)
-    setGsiData(gsi)
 
-    navigate('/gsi')
+    try {
+      if (!file || !(file instanceof File)) {
+        throw new Error('Invalid file input')
+      }
+      if (!file.name.toLowerCase().endsWith('.gsi')) {
+        throw new Error('Archivo no válido. Debes escoger un archivo GSI.')
+      }
+      if (file.size === 0) {
+        throw new Error('Archivo vacío')
+      }
+      const fileContent = await file.text()
+      const gsi = await getGsi(fileContent, data.dateInput, data.timeInput)
+      console.log(gsi)
+      setGsiData(gsi)
+      navigate('/gsi')
+    } catch (error) {
+      console.error(error)
+      navigate('/error', {
+        state: {
+          error: {
+            message: error.message || 'Error desconocido.'
+          }
+        }
+      })
+    }
+
   }
 
   return (
     <>
-      <NavBar />
       {navigation.state === 'loading' ? (
-        <div className="container d-flex justify-content-around">
-          <div
-            className="spinner-grow"
-            style={{ width: '6rem', height: '6rem' }}
-            role="status"
-          ></div>
-          <div
-            className="spinner-grow"
-            style={{ width: '6rem', height: '6rem' }}
-            role="status"
-          ></div>
-          <div
-            className="spinner-grow"
-            style={{ width: '6rem', height: '6rem' }}
-            role="status"
-          ></div>
-        </div>
+        <Spinner />
       ) : (
-        location.pathname === '/' && (
-          <Form
-            method="post"
-            onSubmit={handleSubmit}
-            id="gsi-form"
-            className="container mt-3"
-          >
-            <fieldset>
-              <h1 className="display-3 mb-3">Importador de Nivelaciones</h1>
-              <div className="mb-3">
-                <label htmlFor="formFile" className="form-label">
-                  Selecciona el archivo GSI
-                </label>
-                <input
-                  type="file"
-                  className="form-control"
-                  id="formFile"
-                  name="formFile"
-                  required
-                ></input>
-              </div>
-              <div className="mb-3">
-                <label htmlFor="dateInput" className="form-label">
-                  Fecha de la lectura
-                </label>
-                <input
-                  type="date"
-                  name="dateInput"
-                  id="dateInput"
-                  className="form-control"
-                  required
-                  defaultValue={currentDate}
-                ></input>
-              </div>
-              <div className="mb-3">
-                <label htmlFor="timeInput" className="form-label">
-                  Hora de la lectura
-                </label>
-                <input
-                  type="time"
-                  name="timeInput"
-                  id="timeInput"
-                  className="form-control"
-                  step={1}
-                  required
-                  defaultValue={currentTime}
-                ></input>
-              </div>
-              <button type="submit" className="btn btn-primary" id="submit-gsi">
-                Generar GSI
-              </button>
-            </fieldset>
-          </Form>
-        )
+        <Form
+          method="post"
+          onSubmit={handleSubmit}
+          id="gsi-form"
+          className="container mt-3"
+        >
+          <fieldset>
+            <h1 className="display-3 mb-3">Importador de Nivelaciones</h1>
+            <div className="mb-3">
+              <label htmlFor="formFile" className="form-label">
+                Selecciona el archivo GSI
+              </label>
+              <input
+                type="file"
+                className="form-control"
+                id="formFile"
+                name="formFile"
+                required
+              ></input>
+            </div>
+            <div className="mb-3">
+              <label htmlFor="dateInput" className="form-label">
+                Fecha de la lectura
+              </label>
+              <input
+                type="date"
+                name="dateInput"
+                id="dateInput"
+                className="form-control"
+                required
+                defaultValue={currentDate}
+              ></input>
+            </div>
+            <div className="mb-3">
+              <label htmlFor="timeInput" className="form-label">
+                Hora de la lectura
+              </label>
+              <input
+                type="time"
+                name="timeInput"
+                id="timeInput"
+                className="form-control"
+                step={1}
+                required
+                defaultValue={currentTime}
+              ></input>
+            </div>
+            <button type="submit" className="btn btn-primary" id="submit-gsi">
+              Generar GSI
+            </button>
+          </fieldset>
+        </Form>
       )}
-      <Outlet />
     </>
   )
 }

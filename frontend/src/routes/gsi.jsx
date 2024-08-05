@@ -7,6 +7,7 @@ import CompensationButtons from '../components/CompensationButtons'
 import Table from '../components/Table'
 import GrafoItinerario from '../components/GrafoItinerario'
 import { getTablaDesniveles } from '../services/gsiServices'
+import ProgressSteps from '../components/ProgressSteps'
 
 const Gsi = () => {
   const [visibilityState, setVisibilityState] = useState({})
@@ -19,7 +20,7 @@ const Gsi = () => {
     } else {
       const initialVisibility = gsiData.itinerarios.reduce(
         (acc, itinerario) => {
-          acc[itinerario.numItinerario] = { showTable: false, showGrafo: false }
+          acc[itinerario.numItinerario] = { showTable: false, showGrafo: true }
           return acc
         },
         {}
@@ -136,7 +137,8 @@ const Gsi = () => {
 
   return (
     <>
-      <h1 className="container display-3 mb-3">Tabla GSI</h1>
+      <ProgressSteps handleNext={handleGenerarReporte} />
+      {/* <h1 className="container display-3 mb-3">Tabla GSI</h1> */}
       {gsiData?.itinerarios.length === 0 && (
         <div className="container alert alert-warning">
           No hay itinerarios. Vuelve al inicio para importar otro GSI.
@@ -199,7 +201,7 @@ const Gsi = () => {
               itinerario={itinerario.numItinerario}
               onHandleClick={handleCompensation}
             />
-            {'metodo_comp' in itinerario ? (
+            {/* {'metodo_comp' in itinerario ? (
               <button
                 id={`generar-reporte-${itinerario.numItinerario}`}
                 type="button"
@@ -208,7 +210,7 @@ const Gsi = () => {
               >
                 Generar reporte del itinerario {itinerario.numItinerario}
               </button>
-            ) : null}
+            ) : null} */}
             <Table
               header={itinerario.encabezado}
               lines={itinerario.lineas}
@@ -229,7 +231,7 @@ const Gsi = () => {
             className="container btn btn-primary mb-3"
             onClick={handleGenerarReporte}
           >
-            Generar reporte de todos los itinerarios
+            Generar reporte
           </button>
         </div>
       ) : null}
