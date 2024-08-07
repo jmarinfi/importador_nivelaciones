@@ -40,7 +40,6 @@ const GrafoItinerario = ({ numItinerario }) => {
       })
       return acc
     }, [])
-    console.log(links)
 
     const setNodes = Array.from(
       new Set(links.flatMap((obj) => [obj.source, obj.target]))

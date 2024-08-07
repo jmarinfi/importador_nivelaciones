@@ -1,7 +1,9 @@
 
 const Table = ({ header, lines, onChangeGsi }) => {
-  const getValue = (value) => {
-    if (typeof value === 'number' && value % 1 !== 0) return value.toFixed(4)
+  const getValue = (value, key) => {
+    if (typeof value === 'number' && value % 1 !== 0) {
+      return value.toFixed(5)
+    } 
     return value
   }
 
@@ -36,7 +38,7 @@ const Table = ({ header, lines, onChangeGsi }) => {
                         onChange={(e) => handleInputChange(e, index, key)}
                       />
                     ) : (
-                      getValue(line[key])
+                      getValue(line[key], key)
                     )
                   }</td>
                 ))}

@@ -1,8 +1,8 @@
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import { useGsi } from './GsiContext'
 
-const ProgressSteps = ({ handleNext }) => {
+const ProgressLayout = () => {
   const { gsiData } = useGsi()
   const location = useLocation()
   const navigate = useNavigate()
@@ -32,6 +32,15 @@ const ProgressSteps = ({ handleNext }) => {
     }
   }
 
+  const handleNext = () => {
+    if (currentPath === '/gsi') {
+      navigate('/reporte')
+    }
+    if (currentPath === '/reporte') {
+      navigate('/csv')
+    }
+  }
+
   return (
     <>
       <div className="container">
@@ -46,8 +55,9 @@ const ProgressSteps = ({ handleNext }) => {
           <button className="btn btn-primary flex-fill" id="next" disabled={!isGsiCompensated} onClick={handleNext}>{isGsiCompensated ? 'Generar reporte' : 'Compensar itinerarios'}</button>
         </div>
       </div>
+      <Outlet />
     </>
   )
 }
 
-export default ProgressSteps
+export default ProgressLayout

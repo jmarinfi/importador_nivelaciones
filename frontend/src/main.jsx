@@ -10,6 +10,7 @@ import EstadillosLista, { loader as estadillosListaLoader } from './routes/estad
 import Gsi from './routes/gsi'
 import NavBar from './components/NavBar'
 import Reporte from './routes/reporte'
+import ProgressLayout from './components/ProgressLayout'
 
 const Layout = () => {
   return (
@@ -43,15 +44,20 @@ const router = createBrowserRouter([
         ]
       },
       {
-        path: "gsi",
-        element: <Gsi />,
-      },
-      {
-        path: "reporte",
-        element: <Reporte />
-      },
-      {
-        path: "csv",
+        element: <ProgressLayout />,
+        children: [
+          {
+            path: "gsi",
+            element: <Gsi />,
+          },
+          {
+            path: "reporte",
+            element: <Reporte />
+          },
+          {
+            path: "csv",
+          },
+        ]
       },
       {
         path: "*",
