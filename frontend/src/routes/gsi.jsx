@@ -59,10 +59,10 @@ const Gsi = () => {
       itinerarios: gsiData.itinerarios.map((itinerario) =>
         itinerario.numItinerario === numItinerario
           ? {
-              ...itinerario,
-              lineas: newLines,
-              tabla_desniveles: getTablaDesniveles(newLines),
-            }
+            ...itinerario,
+            lineas: newLines,
+            tabla_desniveles: getTablaDesniveles(newLines),
+          }
           : itinerario
       ),
     }
@@ -135,7 +135,8 @@ const Gsi = () => {
               <GrafoItinerario numItinerario={itinerario.numItinerario} />
             )}
 
-            <CompensationButtons itinerario={itinerario.numItinerario} />
+            <CompensationButtons
+              itinerario={itinerario.numItinerario} />
             <Table
               header={itinerario.encabezado}
               lines={itinerario.lineas}

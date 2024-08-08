@@ -1,6 +1,7 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import { useGsi } from './GsiContext'
+import { useEffect } from 'react'
 
 const ProgressLayout = () => {
   const { gsiData } = useGsi()
@@ -9,6 +10,13 @@ const ProgressLayout = () => {
 
   const isGsiCompensated = gsiData?.itinerarios.every(itinerario => 'metodo_comp' in itinerario)
   const currentPath = location.pathname
+
+  useEffect(() => {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.map((tooltipTriggerEl) => {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+  }, [])
 
   const getProgressWidth = () => {
     switch (currentPath) {
@@ -41,6 +49,41 @@ const ProgressLayout = () => {
     }
   }
 
+  const getTextNextButton = () => {
+    if (currentPath === '/gsi') {
+      return 'Generar reporte'
+    }
+    if (currentPath === '/reporte') {
+      return 'Generar CSV'
+    }
+    return ''
+  }
+
+  const renderNextButton = () => {
+    const isDisabled = currentPath === '/gsi' && !isGsiCompensated
+    const buttonContent = (
+      <button className="btn btn-primary w-100" id="next" disabled={isDisabled} onClick={handleNext}>
+        {getTextNextButton()}
+      </button>
+    )
+
+    if (isDisabled) {
+      return (
+        <span
+          className="d-inline-block w-100"
+          tabIndex="0"
+          data-bs-toggle="tooltip"
+          data-bs-placement="top"
+          title="Antes debes compensar los itinerarios"
+        >
+          {buttonContent}
+        </span>
+      )
+    }
+
+    return buttonContent
+  }
+
   return (
     <>
       <div className="container">
@@ -51,8 +94,12 @@ const ProgressLayout = () => {
           <div className={`circle ${currentPath === '/csv' ? 'active' : ''}`}>CSV</div>
         </div>
         <div className="d-flex gap-2 mb-3">
-          <button className="btn btn-primary flex-fill" id="prev" disabled={currentPath === '/gsi'} onClick={handlePrev}>Retrocede</button>
-          <button className="btn btn-primary flex-fill" id="next" disabled={!isGsiCompensated} onClick={handleNext}>{isGsiCompensated ? 'Generar reporte' : 'Compensar itinerarios'}</button>
+          <div className="flex-fill">
+            <button className="btn btn-primary w-100" id="prev" disabled={currentPath === '/gsi'} onClick={handlePrev}>Retrocede</button>
+          </div>
+          <div className="flex-fill">
+            {renderNextButton()}
+          </div>
         </div>
       </div>
       <Outlet />
