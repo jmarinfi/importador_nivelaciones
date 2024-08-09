@@ -32,6 +32,13 @@ const getMetodo = (data) => {
   }
 }
 
+const transformNomCampo = (itinerario, nom_campo) => {
+  if (!nom_campo.includes('.') && Number.isInteger(Number(nom_campo)) && Number(nom_campo) < 201) {
+    return `I${itinerario}P${nom_campo}`
+  }
+  return nom_campo
+}
+
 // Función para formatear las fechas y horas
 function formatDate(date, time) {
   const dateObj = new Date(`${date} ${time}`)
@@ -90,7 +97,7 @@ const parseGsi = (contentFile, date, time) => {
           return obj
         }, {})
 
-        lineaActual.nom_campo = data.replace(/^0+/, '')
+        lineaActual.nom_campo = transformNomCampo(itinerarioActual.numItinerario, data.replace(/^0+/, ''))
         itinerarioActual.lineas.push(lineaActual)
         break
       case WI_CONSTANTS.DIST_MIRA:

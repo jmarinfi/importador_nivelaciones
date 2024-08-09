@@ -7,6 +7,7 @@ const CompensationButtons = ({ itinerario }) => {
   const { gsiData, setGsiData } = useGsi()
   const [showLeastSquaresForm, setShowLeastSquaresForm] = useState({})
   const [selectedItinerarios, setSelectedItinerarios] = useState([])
+  const [selectedNomsCampo, setSelectedNomsCampo] = useState([])
 
   useEffect(() => {
     const initialVisibilityForm = gsiData.itinerarios.reduce(
@@ -19,6 +20,13 @@ const CompensationButtons = ({ itinerario }) => {
     console.log(initialVisibilityForm)
     setShowLeastSquaresForm(initialVisibilityForm)
   }, [gsiData])
+
+  useEffect(() => {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.map((tooltipTriggerEl) => {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+  }, [])
 
   const handleCompensacionSimple = (event) => {
     console.log('compensación simple')
@@ -82,15 +90,62 @@ const CompensationButtons = ({ itinerario }) => {
       setSelectedItinerarios(prev => [...prev, numItinerario])
     } else {
       setSelectedItinerarios(prev => prev.filter(num => num !== numItinerario))
+      setSelectedNomsCampo(prev => {
+        const nomsCampoItinerario = getNomsCampo(numItinerario)
+        return prev.filter(nom_campo => !nomsCampoItinerario.includes(nom_campo))
+      })
+    }
+  }
+
+  const handleNomCampoSelection = (event) => {
+    console.log(event.target)
+    console.log(event.target.value)
+    if (event.target.checked) {
+      setSelectedNomsCampo(prev => [...prev, event.target.value])
+    } else {
+      setSelectedNomsCampo(prev => prev.filter(nom_campo => nom_campo !== event.target.value))
     }
   }
 
   const handleLeastSquaresSubmit = (event) => {
-
+    console.log(event.target)
   }
 
-  const isDisabled = () => {
+  const compIsDisabled = () => {
     return 'metodo_comp' in gsiData.itinerarios.find(it => it.numItinerario === itinerario)
+  }
+
+  const renderCompensarButton = () => {
+    const isDisabled = selectedNomsCampo.length === 0
+    const buttonContent = (
+      <button className="btn btn-primary btn-sm w-100" disabled={isDisabled} onClick={handleLeastSquaresSubmit}>
+        Compensar
+      </button>
+    )
+
+    if (isDisabled) {
+      return (
+        <span
+          className="d-inline-block w-100"
+          tabIndex="0"
+          data-bs-toggle="tooltip"
+          data-bs-placement="top"
+          title="Antes debes seleccionar alguna base de algún itinerario"
+        >
+          {buttonContent}
+        </span>
+      )
+    }
+
+    return buttonContent
+  }
+
+  const getNomsCampo = (numItinerario) => {
+    const setNomsCampo = gsiData.itinerarios.find(it => it.numItinerario === numItinerario).lineas.reduce((acc, val) => {
+      acc.add(val.nom_campo)
+      return acc
+    }, new Set())
+    return [...setNomsCampo].sort()
   }
 
   return (
@@ -108,7 +163,7 @@ const CompensationButtons = ({ itinerario }) => {
           id={`simple-comp-${itinerario}`}
           autoComplete="off"
           onClick={handleCompensacionSimple}
-          disabled={isDisabled()}
+          disabled={compIsDisabled()}
         />
         <label
           className="btn btn-outline-primary"
@@ -123,7 +178,7 @@ const CompensationButtons = ({ itinerario }) => {
           id={`matrix-comp-${itinerario}`}
           autoComplete="off"
           onClick={handleLeastSquaresCompensation}
-          disabled={isDisabled()}
+          disabled={compIsDisabled()}
         />
         <label
           className="btn btn-outline-primary"
@@ -138,7 +193,7 @@ const CompensationButtons = ({ itinerario }) => {
           id={`none-comp-${itinerario}`}
           autoComplete="off"
           onClick={handleNoneCompensation}
-          disabled={isDisabled()}
+          disabled={compIsDisabled()}
         />
         <label
           className="btn btn-outline-primary"
@@ -177,19 +232,24 @@ const CompensationButtons = ({ itinerario }) => {
           <div className="card mb-3">
             <div className="card-body">
               <h5 className="card-title">Seleccionar bases:</h5>
-              <button type='submit' className="btn btn-sm btn-secondary">Compensar</button>
-              {selectedItinerarios.length === 0 && <p>Debes seleccionar algún itinerario.</p>}
+              {renderCompensarButton()}
               <Form onSubmit={handleLeastSquaresSubmit}>
                 {selectedItinerarios.sort().map(itNum => (
                   <div key={`nom-campo-it-${itNum}`} className="mt-3">
                     <h6>Itinerario {itNum}</h6>
                     <div className="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
-                      {gsiData.itinerarios.find(it => it.numItinerario === itNum).lineas.map((linea, index) => (
+                      {getNomsCampo(itNum).map((nom_campo, index) => (
                         <div key={`linea-${itNum}-${index}`} className="col">
                           <div className="form-check">
-                            <input type="checkbox" className="form-check-input" id={`nom-campo-${itNum}-${index}`} value={linea.nom_campo} />
+                            <input
+                              type="checkbox"
+                              className="form-check-input"
+                              id={`nom-campo-${itNum}-${index}`}
+                              value={nom_campo}
+                              onChange={handleNomCampoSelection}
+                              checked={selectedNomsCampo.includes(nom_campo)} />
                             <label htmlFor={`nom-campo-${itNum}-${index}`} className="form-check-label">
-                              {linea.nom_campo}
+                              {nom_campo}
                             </label>
                           </div>
                         </div>
