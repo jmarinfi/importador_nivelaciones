@@ -228,3 +228,31 @@ export const getGsi = async (content, date, time) => {
   })
   return gsi
 }
+
+export const createMatrixA = (desniveles, nomBases) => {
+  // Crea lista con todos los diferentes nombres de punto
+  const puntos = [...new Set([
+    ...desniveles.map(row => row.punto_espalda),
+    ...desniveles.map(row => row.punto_frente)
+  ])].sort()
+  console.log(puntos)
+
+  let matrizA = []
+
+  // Llena la matriz A con los coeficientes de las ecuaciones de los desniveles
+  for (let i = 0; i < desniveles.length; i++) {
+    let filatemp = new Array(puntos.length).fill(0)
+    filatemp[puntos.indexOf(desniveles[i].punto_espalda)] = -1
+    filatemp[puntos.indexOf(desniveles[i].punto_frente)] = 1
+    matrizA.push(filatemp)
+  }
+
+  // Añade a la matriz A los coeficientes de las ecuaciones de los puntos con cota conocida
+  for (let base of nomBases) {
+    let filatemp = new Array(puntos.length).fill(0)
+    filatemp[puntos.indexOf(base)] = 1
+    matrizA.push(filatemp)
+  }
+
+  return matrizA
+}

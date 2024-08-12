@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Form } from 'react-router-dom'
 
 import { useGsi } from '../components/GsiContext'
+import { createMatrixA } from '../services/gsiServices'
 
 const CompensationButtons = ({ itinerario }) => {
   const { gsiData, setGsiData } = useGsi()
@@ -109,6 +110,7 @@ const CompensationButtons = ({ itinerario }) => {
 
   const handleLeastSquaresSubmit = (event) => {
     console.log(event.target)
+    
   }
 
   const compIsDisabled = () => {
