@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Form } from 'react-router-dom'
+import { Form, useFetcher } from 'react-router-dom'
 
 import { useGsi } from '../components/GsiContext'
-import { createMatrixA } from '../services/gsiServices'
+import { createMatrixA, createMatrixL } from '../services/gsiServices'
 
 const CompensationButtons = ({ itinerario }) => {
   const { gsiData, setGsiData } = useGsi()
@@ -109,8 +109,25 @@ const CompensationButtons = ({ itinerario }) => {
   }
 
   const handleLeastSquaresSubmit = (event) => {
-    console.log(event.target)
-    
+    const desniveles = selectedItinerarios.reduce((acc, curr) => {
+      const desnivelesItinerario = gsiData.itinerarios.find(it => it.numItinerario === curr).tabla_desniveles
+      return [...acc, ...desnivelesItinerario]
+    }, [])
+    const lineasGsi = selectedItinerarios.reduce((acc, curr) => {
+      const lineasItinerario = gsiData.itinerarios.find(it => it.numItinerario === curr).lineas
+      return [...acc, ...lineasItinerario]
+    }, [])
+    const cotasBases = selectedNomsCampo.reduce((acc, curr) => {
+      const lineaGsiBase = lineasGsi.find(linea => linea.nom_campo === curr && linea.cota)
+      console.log(lineaGsiBase)
+      return [...acc, lineaGsiBase.cota]
+    }, [])
+    console.log(cotasBases)
+
+    const matrixA = createMatrixA(desniveles, selectedNomsCampo)
+    const matrixL = createMatrixL(desniveles, cotasBases)
+    console.log(matrixA)
+    console.log(matrixL)
   }
 
   const compIsDisabled = () => {

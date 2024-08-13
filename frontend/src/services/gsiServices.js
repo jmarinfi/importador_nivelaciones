@@ -231,6 +231,8 @@ export const getGsi = async (content, date, time) => {
 
 export const createMatrixA = (desniveles, nomBases) => {
   // Crea lista con todos los diferentes nombres de punto
+  console.log(desniveles)
+  console.log(nomBases)
   const puntos = [...new Set([
     ...desniveles.map(row => row.punto_espalda),
     ...desniveles.map(row => row.punto_frente)
@@ -255,4 +257,16 @@ export const createMatrixA = (desniveles, nomBases) => {
   }
 
   return matrizA
+}
+
+export const createMatrixL = (desniveles, cotaBases) => {
+  const matrixL = []
+
+  for (let i = 0; i < desniveles.length; i++) {
+    matrixL.push(desniveles[i].lectura_espalda - desniveles[i].lectura_frente)
+  }
+
+  matrixL.push(...cotaBases)
+
+  return matrixL
 }
