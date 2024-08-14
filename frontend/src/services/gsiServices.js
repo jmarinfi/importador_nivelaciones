@@ -270,3 +270,46 @@ export const createMatrixL = (desniveles, cotaBases) => {
 
   return matrixL
 }
+
+export const createMatrixP = (desniveles, nomBases) => {
+  const segundosSexToRadianes = segundosSex => (segundosSex / 3600) * Math.PI / 180
+  const calcularPeso = (precCompensadorRad, precPunteriaRad, distEspalda, distFrente) => {
+    const precTotal = Math.sqrt(precCompensadorRad ** 2 + precPunteriaRad ** 2)
+    const desvEstEspalda = precTotal * distEspalda
+    const desvEstFrente = precTotal * distFrente
+    const desvEstDesnivel = Math.sqrt(desvEstEspalda ** 2 + desvEstFrente ** 2)
+    const errorCuadr = desvEstDesnivel ** 2
+    return 1 / errorCuadr
+  }
+
+  // Crear la matriz P
+  const matrixP = []
+  const totalFilas = desniveles.length + nomBases.length
+
+  for (let i = 0; i < totalFilas; i++) {
+    const fila = new Array(totalFilas).fill(0)
+
+    if (i < desniveles.length) {
+      // Calcular el peso para cada desnivel
+      const peso = calcularPeso(
+        segundosSexToRadianes(0.3),
+        segundosSexToRadianes(0),
+        desniveles[i].distancia_espalda,
+        desniveles[i].distancia_frente
+      )
+      fila[i] = peso
+    } else {
+      // Asignar peso fijo a las bases
+      fila[i] = calcularPeso(
+        segundosSexToRadianes(0.3),
+        segundosSexToRadianes(0),
+        1,
+        1
+      )
+    }
+
+    matrixP.push(fila)
+  }
+  
+  return matrixP
+}

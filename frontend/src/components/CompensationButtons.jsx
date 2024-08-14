@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Form, useFetcher } from 'react-router-dom'
+import * as math from 'mathjs'
 
 import { useGsi } from '../components/GsiContext'
-import { createMatrixA, createMatrixL } from '../services/gsiServices'
+import { createMatrixA, createMatrixL, createMatrixP } from '../services/gsiServices'
 
 const CompensationButtons = ({ itinerario }) => {
   const { gsiData, setGsiData } = useGsi()
@@ -126,8 +127,17 @@ const CompensationButtons = ({ itinerario }) => {
 
     const matrixA = createMatrixA(desniveles, selectedNomsCampo)
     const matrixL = createMatrixL(desniveles, cotasBases)
+    const matrixP = createMatrixP(desniveles, selectedNomsCampo)
     console.log(matrixA)
     console.log(matrixL)
+    console.log(matrixP)
+
+    const matrixAT = math.transpose(matrixA)
+    const matrixN = math.multiply(matrixAT, math.multiply(matrixP, matrixA))
+    const matrixNinv = math.inv(matrixN)
+    const matrixT = math.multiply(matrixAT, math.multiply(matrixP, matrixL))
+    const matrixX = math.multiply(matrixNinv, matrixT)
+    console.log(matrixX)
   }
 
   const compIsDisabled = () => {
