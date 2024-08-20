@@ -200,7 +200,7 @@ const CompensationButtons = ({ itinerario }) => {
         >
           Anillo cerrado simple
         </label>
-        <input
+        {/* <input
           type="radio"
           className="btn-check"
           name={`btnradio-${itinerario}`}
@@ -214,7 +214,7 @@ const CompensationButtons = ({ itinerario }) => {
           htmlFor={`matrix-comp-${itinerario}`}
         >
           Ajuste por mínimos cuadrados
-        </label>
+        </label> */}
         <input
           type="radio"
           className="btn-check"

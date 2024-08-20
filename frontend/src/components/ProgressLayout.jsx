@@ -1,10 +1,10 @@
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-
+import { Outlet, useFetcher, useLocation, useNavigate } from 'react-router-dom'
 import { useGsi } from './GsiContext'
+import { getReporte } from '../services/reportServices'
 import { useEffect } from 'react'
 
 const ProgressLayout = () => {
-  const { gsiData } = useGsi()
+  const { gsiData, setGsiData } = useGsi()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -40,9 +40,21 @@ const ProgressLayout = () => {
     }
   }
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentPath === '/gsi') {
-      navigate('/reporte')
+      try {
+        const reporte = await getReporte(gsiData)
+
+        setGsiData(prevData => ({
+          ...prevData,
+          reporte: reporte
+        }))
+
+        navigate('/reporte')
+      } catch (error) {
+        console.error('Error al obtener el reporte: ', error)
+      }
+
     }
     if (currentPath === '/reporte') {
       navigate('/csv')
