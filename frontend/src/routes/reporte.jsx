@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useGsi } from '../components/GsiContext'
+import Table from '../components/Table'
 
 const Reporte = () => {
   const { gsiData, setGsiData } = useGsi()
@@ -9,9 +10,9 @@ const Reporte = () => {
   }, [gsiData])
 
   return (
-    <>
-      {JSON.stringify(gsiData.reporte, null, 2)}
-    </>
+    <div className='container'>
+      <Table header={Object.keys(gsiData.reporte[0])} lines={gsiData.reporte} />
+    </div>
   )
 }
 

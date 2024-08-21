@@ -29,7 +29,7 @@ const Table = ({ header, lines, onChangeGsi }) => {
             {lines.map((line, index) => (
               <tr key={`linea-gsi-${index}`}>
                 {Object.keys(line).map((key) => (
-                  <td key={key}>{
+                  <td key={key} className="text-nowrap">{
                     header.includes('nom_campo') && key === 'nom_campo' ? (
                       <input
                         type="text"

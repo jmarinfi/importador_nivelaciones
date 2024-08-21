@@ -34,14 +34,111 @@ const getTresUltimasLecturas = async (nomsSensores) => {
     return response.json()
 }
 
+const getUltimaReferencia = async (nomsSensores) => {
+    const response = await fetch(`${base_url}/ultima-referencia`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nomsSensores }),
+    })
+
+    if (!response.ok) {
+        throw new Error('Error de red en la petición de la última referencia.')
+    }
+
+    return response.json()
+}
+
+const getLecturaInicial = async (nomsSensores) => {
+    const response = await fetch(`${base_url}/lectura-inicial`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nomsSensores }),
+    })
+
+    if (!response.ok) {
+        throw new Error('Error de red en la petición de la lectura inicial.')
+    }
+
+    return response.json()
+}
+
+const getTresUltimasMedidas = async (nomsSensores) => {
+    const response = await fetch(`${base_url}/tres-ultimas-medidas`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nomsSensores }),
+    })
+
+    if (!response.ok) {
+        throw new Error('Error de red en la petición de las tres últimas medidas.')
+    }
+
+    return response.json()
+}
+
 export const getReporte = async (gsiData) => {
     const nomsSensores = await getNomsSensores(
         gsiData.itinerarios.map(itinerario => itinerario.lineas.map(linea => linea.nom_campo)).flat()
     )
-
     const nomsSensoresArray = nomsSensores.map(sensor => sensor.NOM_SENSOR)
 
-    const tresUltimasLecturas = await getTresUltimasLecturas(nomsSensoresArray)
+    const valuesConsultas = await Promise.all([
+        getTresUltimasLecturas(nomsSensoresArray),
+        getUltimaReferencia(nomsSensoresArray),
+        getLecturaInicial(nomsSensoresArray),
+        getTresUltimasMedidas(nomsSensoresArray),
+    ])
+    console.log(valuesConsultas)
 
-    return tresUltimasLecturas
+    const formatDateTime = (dateTimeString) => {
+        const date = new Date(dateTimeString)
+
+        const padZero = (num) => num.toString().padStart(2, '0')
+
+        const day = padZero(date.getDate())
+        const month = padZero(date.getMonth() + 1)
+        const year = date.getFullYear()
+        const hours = padZero(date.getHours())
+        const minutes = padZero(date.getMinutes())
+        const seconds = padZero(date.getSeconds())
+
+        return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`
+    }
+
+    const reporte = nomsSensoresArray.reduce((acc, nomSensor) => {
+        const tresUltimasLecturas = valuesConsultas[0].find(lectura => lectura.SENSOR === nomSensor)
+        const ultimaReferencia = valuesConsultas[1].find(referencia => referencia.SENSOR === nomSensor)
+        const lecturaInicial = valuesConsultas[2].find(lectura => lectura.SENSOR === nomSensor)
+        const tresUltimasMedidas = valuesConsultas[3].find(medida => medida.SENSOR === nomSensor)
+
+        acc.push({
+            sensor: nomSensor,
+            fecha_lect_inicial: formatDateTime(lecturaInicial.FECHA_MEDIDA),
+            lectura_inicial: Number(lecturaInicial.LECTURA),
+            medida_inicial: Number(lecturaInicial.MEDIDA),
+            fecha_ult_lect: formatDateTime(tresUltimasLecturas.ULTIMA_FECHA_MEDIDA),
+            ult_lectura: Number(tresUltimasLecturas.ULTIMA_LECTURA),
+            ult_medida: Number(tresUltimasMedidas.ULTIMA_MEDIDA),
+            fecha_penult_lect: formatDateTime(tresUltimasLecturas.PENULTIMA_FECHA_MEDIDA),
+            penult_lectura: Number(tresUltimasLecturas.PENULTIMA_LECTURA),
+            penult_medida: Number(tresUltimasMedidas.PENULTIMA_MEDIDA),
+            fecha_antepenult_lect: formatDateTime(tresUltimasLecturas.ANTEPENULTIMA_FECHA_MEDIDA),
+            antepenult_lectura: Number(tresUltimasLecturas.ANTEPENTULTIMA_LECTURA),
+            antepenult_medida: Number(tresUltimasMedidas.ANTEPENULTIMA_MEDIDA),
+            fecha_ult_referencia: ultimaReferencia?.FECHA_MEDIDA ? formatDateTime(ultimaReferencia.FECHA_MEDIDA) : '',
+            lect_ult_referencia: ultimaReferencia?.LECTURA ? Number(ultimaReferencia.LECTURA) : '',
+            med_ult_referencia: ultimaReferencia?.MEDIDA ? Number(ultimaReferencia.MEDIDA) : '',
+        })
+
+        return acc
+    }, [])
+    console.log(reporte)
+
+    return reporte
 }
