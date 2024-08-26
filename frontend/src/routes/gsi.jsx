@@ -7,9 +7,12 @@ import CompensationButtons from '../components/CompensationButtons'
 import Table from '../components/Table'
 import GrafoItinerario from '../components/GrafoItinerario'
 import { getTablaDesniveles } from '../services/gsiServices'
+import { getReporte } from '../services/reportServices'
+import Spinner from '../components/Spinner'
 
 const Gsi = () => {
   const [visibilityState, setVisibilityState] = useState({})
+  const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
   const { gsiData, setGsiData } = useGsi()
 
@@ -70,97 +73,110 @@ const Gsi = () => {
     setGsiData(newGsiData)
   }
 
-  const handleGenerarReporte = (event) => {
-    console.log(event.target.id)
-    navigate('/reporte')
+  const handleGenerarReporte = async (event) => {
+    setIsLoading(true)
+    try {
+      const reporte = await getReporte(gsiData)
+
+      setGsiData(prevData => ({
+        ...prevData,
+        reporte: reporte
+      }))
+
+      navigate('/reporte')
+    } catch (error) {
+      console.error('Error al obtener el reporte: ', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
     <>
-      {gsiData?.itinerarios.length === 0 && (
-        <div className="container alert alert-warning">
-          No hay itinerarios. Vuelve al inicio para importar otro GSI.
-        </div>
-      )}
-      {gsiData?.itinerarios.map((itinerario) => {
-        return (
-          <div
-            key={`itinerario-${itinerario.numItinerario}`}
-            className="container"
-          >
-            <h2 className="display-6 mb-3">{`Itinerario ${itinerario.numItinerario}`}</h2>
-            <CardsGsi cards={itinerario.cards} />
-            <div className="d-flex gap-2 mb-3">
-              <button
-                type="button"
-                id={itinerario.numItinerario}
-                className="btn btn-primary flex-fill"
-                onClick={handleDescartaItinerario}
+      {isLoading ? <Spinner /> : (
+        <>
+          {gsiData?.itinerarios.map((itinerario) => {
+            return (
+              <div
+                key={`itinerario-${itinerario.numItinerario}`}
+                className="container"
               >
-                Descartar itinerario
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary flex-fill"
-                onClick={() =>
-                  toggleVisibility(itinerario.numItinerario, 'showTable')
-                }
-              >
-                {visibilityState[itinerario.numItinerario]?.showTable
-                  ? 'Esconder tabla de desniveles'
-                  : 'Ver tabla de desniveles'}
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary flex-fill"
-                onClick={() =>
-                  toggleVisibility(itinerario.numItinerario, 'showGrafo')
-                }
-              >
-                {visibilityState[itinerario.numItinerario]?.showGrafo
-                  ? 'Esconder grafo del itinerario'
-                  : 'Ver grafo del itinerario'}
-              </button>
-            </div>
-            {visibilityState[itinerario.numItinerario]?.showTable && (
-              <div className="card card-body mb-3">
+                <h2 className="display-6 mb-3">{`Itinerario ${itinerario.numItinerario}`}</h2>
+                <CardsGsi cards={itinerario.cards} />
+                <div className="d-flex gap-2 mb-3">
+                  <button
+                    type="button"
+                    id={itinerario.numItinerario}
+                    className="btn btn-primary flex-fill"
+                    onClick={handleDescartaItinerario}
+                  >
+                    Descartar itinerario
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary flex-fill"
+                    onClick={() =>
+                      toggleVisibility(itinerario.numItinerario, 'showTable')
+                    }
+                  >
+                    {visibilityState[itinerario.numItinerario]?.showTable
+                      ? 'Esconder tabla de desniveles'
+                      : 'Ver tabla de desniveles'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary flex-fill"
+                    onClick={() =>
+                      toggleVisibility(itinerario.numItinerario, 'showGrafo')
+                    }
+                  >
+                    {visibilityState[itinerario.numItinerario]?.showGrafo
+                      ? 'Esconder grafo del itinerario'
+                      : 'Ver grafo del itinerario'}
+                  </button>
+                </div>
+                {visibilityState[itinerario.numItinerario]?.showTable && (
+                  <div className="card card-body mb-3">
+                    <Table
+                      header={Object.keys(itinerario.tabla_desniveles[0])}
+                      lines={itinerario.tabla_desniveles}
+                    />
+                  </div>
+                )}
+
+                {visibilityState[itinerario.numItinerario]?.showGrafo && (
+                  <GrafoItinerario numItinerario={itinerario.numItinerario} />
+                )}
+
+                <CompensationButtons
+                  itinerario={itinerario.numItinerario} />
                 <Table
-                  header={Object.keys(itinerario.tabla_desniveles[0])}
-                  lines={itinerario.tabla_desniveles}
+                  header={itinerario.encabezado}
+                  lines={itinerario.lineas}
+                  onChangeGsi={(newLines) =>
+                    handleGsiChange(newLines, itinerario.numItinerario)
+                  }
                 />
               </div>
-            )}
+            )
+          })}
+          {gsiData?.itinerarios.every(
+            (itinerario) => 'metodo_comp' in itinerario
+          ) ? (
+            <div className="container">
+              <button
+                id="generar-reporte-todos"
+                type="button"
+                className="container btn btn-primary mb-3"
+                onClick={handleGenerarReporte}
+              >
+                Generar reporte
+              </button>
+            </div>
+          ) : null}
+        </>
+      )}
 
-            {visibilityState[itinerario.numItinerario]?.showGrafo && (
-              <GrafoItinerario numItinerario={itinerario.numItinerario} />
-            )}
-
-            <CompensationButtons
-              itinerario={itinerario.numItinerario} />
-            <Table
-              header={itinerario.encabezado}
-              lines={itinerario.lineas}
-              onChangeGsi={(newLines) =>
-                handleGsiChange(newLines, itinerario.numItinerario)
-              }
-            />
-          </div>
-        )
-      })}
-      {gsiData?.itinerarios.every(
-        (itinerario) => 'metodo_comp' in itinerario
-      ) ? (
-        <div className="container">
-          <button
-            id="generar-reporte-todos"
-            type="button"
-            className="container btn btn-primary mb-3"
-            onClick={handleGenerarReporte}
-          >
-            Generar reporte
-          </button>
-        </div>
-      ) : null}
     </>
   )
 }

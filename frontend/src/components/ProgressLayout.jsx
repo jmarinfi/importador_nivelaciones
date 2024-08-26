@@ -1,14 +1,16 @@
-import { Outlet, useFetcher, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useGsi } from './GsiContext'
-import { getReporte } from '../services/reportServices'
-import { useEffect } from 'react'
+import { getReporte, getCsv } from '../services/reportServices'
+import { useEffect, useState } from 'react'
+import Spinner from './Spinner'
 
 const ProgressLayout = () => {
   const { gsiData, setGsiData } = useGsi()
   const location = useLocation()
   const navigate = useNavigate()
+  const [isLoading, setIsLoading] = useState(false)
 
-  const isGsiCompensated = gsiData?.itinerarios.every(itinerario => 'metodo_comp' in itinerario)
+  const isGsiCompensated = gsiData?.itinerarios?.every(itinerario => 'metodo_comp' in itinerario)
   const currentPath = location.pathname
 
   useEffect(() => {
@@ -17,6 +19,18 @@ const ProgressLayout = () => {
       return new bootstrap.Tooltip(tooltipTriggerEl)
     })
   }, [])
+
+  useEffect(() => {
+    if (!gsiData) {
+      navigate('/')
+    }
+    if (currentPath === '/gsi' && (!gsiData?.itinerarios || gsiData.itinerarios.length === 0)) {
+      navigate('/')
+    }
+    if (currentPath === '/reporte' && (!gsiData?.reporte || gsiData.reporte.length === 0)) {
+      navigate('/')
+    }
+  }, [currentPath, gsiData, navigate])
 
   const getProgressWidth = () => {
     switch (currentPath) {
@@ -42,6 +56,7 @@ const ProgressLayout = () => {
 
   const handleNext = async () => {
     if (currentPath === '/gsi') {
+      setIsLoading(true)
       try {
         const reporte = await getReporte(gsiData)
 
@@ -53,10 +68,19 @@ const ProgressLayout = () => {
         navigate('/reporte')
       } catch (error) {
         console.error('Error al obtener el reporte: ', error)
+      } finally {
+        setIsLoading(false)
       }
 
     }
     if (currentPath === '/reporte') {
+      const csv = getCsv(gsiData)
+
+      setGsiData(prevData => ({
+        ...prevData,
+        csv: csv
+      }))
+      
       navigate('/csv')
     }
   }
@@ -64,15 +88,13 @@ const ProgressLayout = () => {
   const getTextNextButton = () => {
     if (currentPath === '/gsi') {
       return 'Generar reporte'
-    }
-    if (currentPath === '/reporte') {
+    } else {
       return 'Generar CSV'
     }
-    return ''
   }
 
   const renderNextButton = () => {
-    const isDisabled = currentPath === '/gsi' && !isGsiCompensated
+    const isDisabled = (currentPath === '/gsi' && !isGsiCompensated) || (currentPath === '/csv')
     const buttonContent = (
       <button className="btn btn-primary w-100" id="next" disabled={isDisabled} onClick={handleNext}>
         {getTextNextButton()}
@@ -114,7 +136,7 @@ const ProgressLayout = () => {
           </div>
         </div>
       </div>
-      <Outlet />
+      {isLoading ? <Spinner /> : <Outlet />}
     </>
   )
 }

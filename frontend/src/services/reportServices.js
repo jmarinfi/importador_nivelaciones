@@ -83,9 +83,21 @@ const getTresUltimasMedidas = async (nomsSensores) => {
 }
 
 export const getReporte = async (gsiData) => {
+    const cotas = gsiData.itinerarios.flatMap(
+        itinerario => itinerario.lineas.filter(
+            linea => linea.cota !== null
+        ).map(
+            linea => ({
+                nom_campo: linea.nom_campo,
+                cota: linea.cota,
+                cota_comp: linea.cota_comp
+            })
+        )
+    )
     const nomsSensores = await getNomsSensores(
         gsiData.itinerarios.map(itinerario => itinerario.lineas.map(linea => linea.nom_campo)).flat()
     )
+    console.log(nomsSensores)
     const nomsSensoresArray = nomsSensores.map(sensor => sensor.NOM_SENSOR)
 
     const valuesConsultas = await Promise.all([
@@ -116,9 +128,14 @@ export const getReporte = async (gsiData) => {
         const ultimaReferencia = valuesConsultas[1].find(referencia => referencia.SENSOR === nomSensor)
         const lecturaInicial = valuesConsultas[2].find(lectura => lectura.SENSOR === nomSensor)
         const tresUltimasMedidas = valuesConsultas[3].find(medida => medida.SENSOR === nomSensor)
+        const nomCampo = nomsSensores.find(sensor => sensor.NOM_SENSOR === nomSensor).ID_EXTERNO
 
-        acc.push({
-            sensor: nomSensor,
+        const cotaEncontrada = cotas.find(cota => cota.nom_campo === nomCampo)
+        const objReporte = {
+            nom_campo: nomCampo,
+            nom_sensor: nomSensor,
+            cota: Number(cotas.find(cota => cota.nom_campo === nomCampo).cota),
+            cota_comp: cotaEncontrada && cotaEncontrada.cota_comp ? Number(cotaEncontrada.cota_comp) : null,
             fecha_lect_inicial: formatDateTime(lecturaInicial.FECHA_MEDIDA),
             lectura_inicial: Number(lecturaInicial.LECTURA),
             medida_inicial: Number(lecturaInicial.MEDIDA),
@@ -134,11 +151,21 @@ export const getReporte = async (gsiData) => {
             fecha_ult_referencia: ultimaReferencia?.FECHA_MEDIDA ? formatDateTime(ultimaReferencia.FECHA_MEDIDA) : '',
             lect_ult_referencia: ultimaReferencia?.LECTURA ? Number(ultimaReferencia.LECTURA) : '',
             med_ult_referencia: ultimaReferencia?.MEDIDA ? Number(ultimaReferencia.MEDIDA) : '',
-        })
+        }
+
+        acc.push(objReporte)
 
         return acc
     }, [])
     console.log(reporte)
 
     return reporte
+}
+
+export const getCsv = (gsiData) => {
+    return gsiData.reporte.map(lineaReporte => ({
+        fecha: gsiData.fecha,
+        nom_sensor: lineaReporte.nom_sensor,
+        lectura: lineaReporte.cota_comp ? lineaReporte.cota_comp : lineaReporte.cota,
+    }))
 }

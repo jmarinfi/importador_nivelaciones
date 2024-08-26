@@ -11,6 +11,7 @@ import Gsi from './routes/gsi'
 import NavBar from './components/NavBar'
 import Reporte from './routes/reporte'
 import ProgressLayout from './components/ProgressLayout'
+import CsvImport from './routes/csv_import'
 
 const Layout = () => {
   return (
@@ -56,6 +57,7 @@ const router = createBrowserRouter([
           },
           {
             path: "csv",
+            element: <CsvImport />
           },
         ]
       },
