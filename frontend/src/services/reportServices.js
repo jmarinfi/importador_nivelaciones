@@ -169,3 +169,26 @@ export const getCsv = (gsiData) => {
         lectura: lineaReporte.cota_comp ? lineaReporte.cota_comp : lineaReporte.cota,
     }))
 }
+
+export const toCsv = (csvData) => {
+    return csvData.map(obj => Object.values(obj).join(',')).join('\n')
+}
+
+export const uploadCsv = async (csvData) => {
+    const csv = toCsv(csvData)
+    const base64Csv = btoa(csv)
+
+    const response = await fetch(`${base_url}/enviar-csv`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ csv: base64Csv }),
+    })
+
+    if (!response.ok) {
+        throw new Error('Error de red en la petición de subida de CSV.')
+    }
+
+    return csv
+}

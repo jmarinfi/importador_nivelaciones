@@ -3,6 +3,8 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const path = require('path')
+const ftp = require('basic-ftp')
+const { Readable } = require('stream')
 const app = express()
 const port = process.env.PORT || 3005
 
@@ -12,6 +14,7 @@ app.use(express.static('dist'))
 app.use(express.json())
 
 const connection = require('./utils/db-metrolima')
+const { error } = require('console')
 
 
 app.get('/', (req, res) => {
@@ -144,6 +147,35 @@ app.post('/api/tres-ultimas-medidas', (req, res) => {
     if (err) throw err
     res.json(rows)
   })
+})
+
+app.post('/api/enviar-csv', async (req, res) => {
+  const { csv } = req.body
+
+  if (!csv || csv.length === 0) {
+    return res.status(400).json({ error: 'No se ha enviado un archivo CSV' })
+  }
+
+  const client = new ftp.Client()
+
+  try {
+    await client.access({
+      host: process.env.FTP_TEST_HOST,
+      user: process.env.FTP_TEST_USER,
+      password: process.env.FTP_TEST_PASSWORD,
+    })
+
+    const today = new Date()
+    const stream = Readable.from(Buffer.from(csv, 'base64'))
+    await client.uploadFrom(stream, `test_${Date.now()}.csv`)
+    res.json({ message: 'Archivo CSV subido correctamente' })
+
+  } catch (error) {
+    console.error('Error al subir el archivo CSV', error)
+    res.status(500).json({ error: error.message })
+  } finally {
+    client.close()
+  }
 })
 
 app.get('*', (req, res) => {
