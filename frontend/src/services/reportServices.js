@@ -2,6 +2,8 @@ const base_url = process.env.NODE_ENV === 'development'
     ? 'http://localhost:3005/api'
     : '/api'
 
+const calc_medida = (lectura, lectura_inicial, medida_referencia) => (lectura - lectura_inicial) * 1000 + medida_referencia
+
 const getNomsSensores = async (nomsCampo) => {
     const response = await fetch(`${base_url}/noms-sensores`, {
         method: 'POST',
@@ -129,28 +131,42 @@ export const getReporte = async (gsiData) => {
         const lecturaInicial = valuesConsultas[2].find(lectura => lectura.SENSOR === nomSensor)
         const tresUltimasMedidas = valuesConsultas[3].find(medida => medida.SENSOR === nomSensor)
         const nomCampo = nomsSensores.find(sensor => sensor.NOM_SENSOR === nomSensor).ID_EXTERNO
-
+        const cota = Number(cotas.find(cota => cota.nom_campo === nomCampo).cota)
         const cotaEncontrada = cotas.find(cota => cota.nom_campo === nomCampo)
+        const cota_comp = cotaEncontrada && cotaEncontrada.cota_comp ? Number(cotaEncontrada.cota_comp) : null
+        const lectura_inicial = Number(lecturaInicial.LECTURA)
+        const medida = calc_medida(cota_comp ? cota_comp : cota, lectura_inicial, ultimaReferencia?.MEDIDA ? Number(ultimaReferencia.MEDIDA) : 0)
+        const ult_medida = Number(tresUltimasMedidas.ULTIMA_MEDIDA)
+        const dif_ult_med = medida - ult_medida
+        const penult_medida = Number(tresUltimasMedidas.PENULTIMA_MEDIDA)
+        const dif_penult_med = medida - penult_medida
+        const antepenult_medida = Number(tresUltimasMedidas.ANTEPENULTIMA_MEDIDA)
+        const dif_antepenult_med = medida - antepenult_medida
+
         const objReporte = {
             nom_campo: nomCampo,
             nom_sensor: nomSensor,
-            cota: Number(cotas.find(cota => cota.nom_campo === nomCampo).cota),
-            cota_comp: cotaEncontrada && cotaEncontrada.cota_comp ? Number(cotaEncontrada.cota_comp) : null,
-            fecha_lect_inicial: formatDateTime(lecturaInicial.FECHA_MEDIDA),
-            lectura_inicial: Number(lecturaInicial.LECTURA),
+            cota: cota,
+            cota_comp: cota_comp,
+            dif_ult_med: dif_ult_med,
+            dif_penult_med: dif_penult_med,
+            dif_antepenult_med: dif_antepenult_med,
+            // fecha_lect_inicial: formatDateTime(lecturaInicial.FECHA_MEDIDA),
+            lectura_inicial: lectura_inicial,
             medida_inicial: Number(lecturaInicial.MEDIDA),
-            fecha_ult_lect: formatDateTime(tresUltimasLecturas.ULTIMA_FECHA_MEDIDA),
-            ult_lectura: Number(tresUltimasLecturas.ULTIMA_LECTURA),
-            ult_medida: Number(tresUltimasMedidas.ULTIMA_MEDIDA),
-            fecha_penult_lect: formatDateTime(tresUltimasLecturas.PENULTIMA_FECHA_MEDIDA),
-            penult_lectura: Number(tresUltimasLecturas.PENULTIMA_LECTURA),
-            penult_medida: Number(tresUltimasMedidas.PENULTIMA_MEDIDA),
-            fecha_antepenult_lect: formatDateTime(tresUltimasLecturas.ANTEPENULTIMA_FECHA_MEDIDA),
-            antepenult_lectura: Number(tresUltimasLecturas.ANTEPENTULTIMA_LECTURA),
-            antepenult_medida: Number(tresUltimasMedidas.ANTEPENULTIMA_MEDIDA),
-            fecha_ult_referencia: ultimaReferencia?.FECHA_MEDIDA ? formatDateTime(ultimaReferencia.FECHA_MEDIDA) : '',
+            // fecha_ult_lect: formatDateTime(tresUltimasLecturas.ULTIMA_FECHA_MEDIDA),
+            // ult_lectura: Number(tresUltimasLecturas.ULTIMA_LECTURA),
+            // ult_medida: ult_medida,
+            // fecha_penult_lect: formatDateTime(tresUltimasLecturas.PENULTIMA_FECHA_MEDIDA),
+            // penult_lectura: Number(tresUltimasLecturas.PENULTIMA_LECTURA),
+            // penult_medida: penult_medida,
+            // fecha_antepenult_lect: formatDateTime(tresUltimasLecturas.ANTEPENULTIMA_FECHA_MEDIDA),
+            // antepenult_lectura: Number(tresUltimasLecturas.ANTEPENTULTIMA_LECTURA),
+            // antepenult_medida: antepenult_medida,
+            // fecha_ult_referencia: ultimaReferencia?.FECHA_MEDIDA ? formatDateTime(ultimaReferencia.FECHA_MEDIDA) : '',
             lect_ult_referencia: ultimaReferencia?.LECTURA ? Number(ultimaReferencia.LECTURA) : '',
             med_ult_referencia: ultimaReferencia?.MEDIDA ? Number(ultimaReferencia.MEDIDA) : '',
+            medida: medida,
         }
 
         acc.push(objReporte)
