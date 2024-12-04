@@ -160,9 +160,9 @@ app.post('/api/enviar-csv', async (req, res) => {
 
   try {
     await client.access({
-      host: process.env.FTP_TEST_HOST,
-      user: process.env.FTP_TEST_USER,
-      password: process.env.FTP_TEST_PASSWORD,
+      host: process.env.FTP_PROD_HOST,
+      user: process.env.FTP_PROD_USER,
+      password: process.env.FTP_PROD_PASSWORD,
     })
 
     const today = new Date()
